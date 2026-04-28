@@ -1,0 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --color-r3up-orange: #FF6B00;
+  --color-r3up-green: #00DF81;
+  --color-r3up-black: #080808;
+  --color-r3up-gray: #1A1A1A;
+}
+
+@layer base {
+  body {
+    @apply bg-white text-zinc-900 antialiased;
+  }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 30s linear infinite;
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+@keyframes scan-horizontal {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-scanline {
+  animation: scanline 8s linear infinite;
+}
+
+.animate-scan-horizontal {
+  animation: scan-horizontal 3s ease-in-out infinite;
+}
+
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 4s ease-in-out infinite;
+}
+
+@layer components {
+  .terminal-glass {
+    @apply bg-[#06040a]/80 backdrop-blur-xl border border-white/10 shadow-[0_0_20px_rgba(48,213,200,0.1)];
+  }
+  .glow-cyan { text-shadow: 0 0 10px rgba(48, 213, 200, 0.5); }
+  .terminal-grid {
+    background-image: radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.05) 1px, transparent 0);
+    background-size: 20px 20px;
+  }
+  .locked-data {
+    @apply blur-sm select-none pointer-events-none opacity-40;
+  }
+  .terminal-border {
+    @apply border border-zinc-200 relative;
+  }
+  .terminal-border::before {
+    content: '';
+    @apply absolute -top-px -left-px w-2 h-2 border-t-2 border-l-2 border-r3up-orange;
+  }
+  .terminal-border::after {
+    content: '';
+    @apply absolute -bottom-px -right-px w-2 h-2 border-b-2 border-r-2 border-r3up-orange;
+  }
+  .data-number {
+    font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.05em;
+  }
+}
+
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.animate-bounce-slow {
+  animation: bounce-slow 4s ease-in-out infinite;
+}
