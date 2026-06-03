@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>R3UP — Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange: #FF6B00;
+      --green: #00DF81;
+      --black: #080808;
+      --zinc-900: #18181b;
+      --zinc-800: #27272a;
+      --zinc-700: #3f3f46;
+      --zinc-600: #52525b;
+      --zinc-500: #71717a;
+      --zinc-400: #a1a1aa;
+      --zinc-300: #d4d4d8;
+      --zinc-200: #e4e4e7;
+      --zinc-100: #f4f4f5;
+      --zinc-50: #fafafa;
+      --white: #ffffff;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #F5F5F7;
+      color: var(--zinc-900);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .mono { font-family: 'JetBrains Mono', monospace; }
+
+    /* ── GRID OVERLAY ── */
+    .terminal-grid {
+      background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0);
+      background-size: 20px 20px;
+    }
+
+    /* ── MARQUEE ── */
+    @keyframes marquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .marquee { display: flex; width: max-content; animation: marquee 30s linear infinite; }
+
+    /* ── FLOAT ── */
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    .float { animation: float 4s ease-in-out infinite; }
+
+    /* ── PULSE ── */
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    .pulse { animation: pulse 2s ease-in-out infinite; }
+
+    /* ── SCAN ── */
+    @keyframes scan { 0%{transform:translateY(-100%)} 100%{transform:translateY(100%)} }
+    .scanline { animation: scan 8s linear infinite; }
+
+    /* ── SPIN SLOW ── */
+    @keyframes spin-slow { to { transform: rotate(360deg); } }
+    .spin-slow { animation: spin-slow 40s linear infinite; }
+
+    /* ── PROGRESS ── */
+    @keyframes progress { from{width:0} to{width:85%} }
+    .progress-bar { animation: progress 2.5s ease-out 0.5s both; }
+
+    /* ── NAVBAR ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      border-bottom: 1px solid var(--zinc-200);
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(20px);
+    }
+    .nav-inner {
+      max-width: 1280px; margin: 0 auto; padding: 0 24px;
+      height: 80px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo {
+      font-size: 22px; font-weight: 900; letter-spacing: -0.05em;
+      font-style: italic; text-transform: uppercase;
+      display: flex; align-items: center; gap: 10px;
+      color: var(--zinc-900); text-decoration: none;
+    }
+    .logo-icon {
+      width: 32px; height: 32px; background: var(--orange);
+      border-radius: 3px; display: flex; align-items: center; justify-content: center;
+    }
+    .logo-icon svg { color: #000; }
+    .nav-links { display: flex; align-items: center; gap: 24px; }
+    .nav-link {
+      font-size: 10px; font-weight: 900; text-transform: uppercase;
+      letter-spacing: 0.15em; color: var(--zinc-500);
+      background: none; border: none; cursor: pointer; transition: color 0.15s;
+    }
+    .nav-link.active { color: var(--orange); }
+    .nav-link:hover { color: var(--zinc-900); }
+    .nav-cmd {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 12px; background: var(--zinc-100);
+      border: 1px solid var(--zinc-200); border-radius: 3px;
+      font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--zinc-500);
+    }
+    .nav-stats { display: flex; align-items: center; gap: 16px; margin-right: 16px; padding-right: 16px; border-right: 1px solid var(--zinc-200); }
+    .nav-stat-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--zinc-400); text-transform: uppercase; }
+    .nav-stat-value { font-size: 12px; font-weight: 700; font-family: 'JetBrains Mono', monospace; letter-spacing: -0.05em; }
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .btn-auth {
+      height: 40px; padding: 0 24px; border-radius: 3px;
+      background: var(--zinc-900); color: white;
+      font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em;
+      border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;
+      transition: background 0.15s;
+    }
+    .btn-auth:hover { background: var(--orange); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh; background: white; color: var(--zinc-900);
+      overflow: hidden; position: relative;
+      border-bottom: 1px solid var(--zinc-200);
+    }
+    .hero-grid {
+      position: absolute; inset: 0;
+      background: linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px),
+                  linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .hero-inner {
+      max-width: 1280px; margin: 0 auto; padding: 128px 24px 0;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 64px;
+      align-items: center; position: relative; z-index: 10;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 4px 12px; border: 1px solid rgba(0,223,129,0.3);
+      background: rgba(0,223,129,0.05); color: var(--green);
+      font-family: 'JetBrains Mono', monospace; font-size: 10px;
+      letter-spacing: 0.15em; text-transform: uppercase;
+    }
+    .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+    .hero-h1 {
+      font-size: clamp(48px, 7vw, 96px); font-weight: 900;
+      letter-spacing: -0.04em; line-height: 0.85;
+      text-transform: uppercase; font-style: italic;
+      margin: 24px 0;
+    }
+    .hero-h1 span { color: var(--orange); }
+    .hero-p {
+      max-width: 440px; color: var(--zinc-500); font-size: 18px;
+      font-weight: 300; line-height: 1.6;
+      border-left: 2px solid var(--orange); padding-left: 24px;
+    }
+    .hero-p strong { color: var(--zinc-900); font-weight: 700; }
+    .hero-p em { color: var(--green); font-style: normal; font-weight: 700; }
+    .hero-btns { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 32px; }
+    .btn-primary {
+      height: 56px; padding: 0 40px; background: var(--orange); color: #000;
+      font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em;
+      border: none; cursor: pointer; border-radius: 2px;
+      box-shadow: 0 0 25px rgba(255,107,0,0.2);
+      transition: background 0.15s, color 0.15s;
+    }
+    .btn-primary:hover { background: var(--zinc-900); color: white; }
+    .btn-secondary {
+      height: 56px; padding: 0 40px; border: 1px solid var(--zinc-200);
+      background: none; color: var(--zinc-600);
+      font-family: 'JetBrains Mono', monospace; font-size: 10px;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      cursor: pointer; border-radius: 2px; transition: background 0.15s;
+    }
+    .btn-secondary:hover { background: var(--zinc-50); }
+
+    /* Globe placeholder */
+    .hero-right { position: relative; }
+    .hero-glow {
+      position: absolute; inset: -80px;
+      background: rgba(255,107,0,0.1); border-radius: 50%; filter: blur(120px);
+      pointer-events: none;
+    }
+    .hero-terminal {
+      position: relative; border: 1px solid var(--zinc-200);
+      background: rgba(255,255,255,0.5); backdrop-filter: blur(8px);
+      padding: 8px;
+    }
+    .hero-terminal::before {
+      content: ''; position: absolute; top: -1px; left: -1px;
+      width: 8px; height: 8px;
+      border-top: 2px solid var(--orange); border-left: 2px solid var(--orange);
+    }
+    .hero-terminal::after {
+      content: ''; position: absolute; bottom: -1px; right: -1px;
+      width: 8px; height: 8px;
+      border-bottom: 2px solid var(--orange); border-right: 2px solid var(--orange);
+    }
+    .globe-canvas {
+      width: 100%; aspect-ratio: 1;
+      background: radial-gradient(circle at 40% 40%, #1a1a2e 0%, #0a0a0c 60%, #000 100%);
+      border-radius: 4px; position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .globe-sphere {
+      width: 280px; height: 280px; border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%,
+        rgba(255,107,0,0.15) 0%,
+        rgba(0,223,129,0.05) 40%,
+        rgba(0,0,0,0.8) 70%
+      );
+      border: 1px solid rgba(255,255,255,0.1);
+      position: relative;
+      box-shadow: 0 0 80px rgba(255,107,0,0.15), inset 0 0 60px rgba(0,0,0,0.5);
+    }
+    .globe-lines {
+      position: absolute; inset: 0; border-radius: 50%; overflow: hidden; opacity: 0.2;
+      background:
+        repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(255,255,255,0.3) 28px, rgba(255,255,255,0.3) 29px),
+        repeating-linear-gradient(90deg, transparent, transparent 28px, rgba(255,255,255,0.1) 28px, rgba(255,255,255,0.1) 29px);
+    }
+    .globe-ping {
+      position: absolute; width: 8px; height: 8px; border-radius: 50%;
+      background: var(--orange);
+      box-shadow: 0 0 12px var(--orange), 0 0 24px rgba(255,107,0,0.5);
+    }
+    .globe-ping::after {
+      content: ''; position: absolute; inset: -6px; border-radius: 50%;
+      border: 1px solid rgba(255,107,0,0.4);
+      animation: ping 2s ease-out infinite;
+    }
+    @keyframes ping { to { transform: scale(3); opacity: 0; } }
+    .globe-coord {
+      position: absolute; top: 12px; left: 12px;
+      font-family: 'JetBrains Mono', monospace; font-size: 8px;
+      color: rgba(255,255,255,0.4); line-height: 1.6;
+    }
+    .globe-coord .status { color: var(--green); }
+    .hero-widget {
+      position: absolute; top: 32px; right: 0;
+      background: rgba(255,255,255,0.9); backdrop-filter: blur(20px);
+      border: 1px solid var(--zinc-200); padding: 16px;
+      border-radius: 3px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      font-family: 'JetBrains Mono', monospace; min-width: 200px;
+    }
+    .widget-tag {
+      font-size: 9px; color: var(--green); text-transform: uppercase;
+      display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
+    }
+    .widget-title { font-size: 12px; font-weight: 700; color: var(--zinc-900); }
+    .widget-sub { font-size: 10px; color: var(--zinc-400); margin-top: 4px; }
+    .widget-delta { margin-top: 8px; text-align: right; font-size: 12px; font-weight: 700; color: var(--orange); }
+
+    /* Hero Bottom Ribbon */
+    .hero-ribbon {
+      position: absolute; bottom: 0; width: 100%;
+      background: rgba(255,255,255,0.8); backdrop-filter: blur(12px);
+      border-top: 1px solid var(--zinc-100); padding: 16px 0; overflow: hidden;
+    }
+    .ribbon-track { overflow: hidden; }
+    .ribbon-inner {
+      display: flex; gap: 64px; white-space: nowrap;
+      font-family: 'JetBrains Mono', monospace; font-size: 10px;
+      color: var(--zinc-500); text-transform: uppercase; letter-spacing: 0.15em;
+      animation: marquee 30s linear infinite;
+    }
+    .ribbon-item { display: flex; align-items: center; gap: 8px; }
+    .ribbon-price { color: var(--green); font-weight: 700; }
+    .ribbon-profit { color: var(--orange); }
+
+    /* ── ECOSYSTEM ── */
+    .ecosystem {
+      padding: 96px 0; background: white;
+      border-top: 1px solid var(--zinc-200);
+    }
+    .ecosystem.tg { background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px; }
+    .section-center { text-align: center; margin-bottom: 80px; }
+    .section-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 4px 12px; border-radius: 999px;
+      border: 1px solid var(--zinc-200); background: var(--zinc-50);
+      color: var(--zinc-500);
+      font-family: 'JetBrains Mono', monospace; font-size: 10px;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .section-h2 {
+      font-size: clamp(32px, 4vw, 52px); font-weight: 700;
+      letter-spacing: -0.04em; color: var(--zinc-900);
+    }
+    .section-h2 span { color: var(--orange); }
+    .section-p {
+      color: var(--zinc-500); font-size: 18px; line-height: 1.6;
+      max-width: 640px; margin: 16px auto 0;
+    }
+    .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+    .tier-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px;
+    }
+    .tier-card {
+      padding: 32px; border-radius: 16px; border: 1px solid;
+      transition: box-shadow 0.2s;
+    }
+    .tier-card:hover { box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
+    .tier-icon {
+      width: 48px; height: 48px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--zinc-200); background: white;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 24px;
+    }
+    .tier-label {
+      font-family: 'JetBrains Mono', monospace; font-size: 10px;
+      text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 8px;
+    }
+    .tier-name { font-size: 20px; font-weight: 700; color: var(--zinc-900); margin-bottom: 8px; }
+    .tier-desc { font-size: 14px; color: var(--zinc-500); line-height: 1.6; }
+
+    .data-strip {
+      margin-top: 80px; padding: 32px;
+      border-radius: 24px; border: 1px solid var(--zinc-200);
+      background: var(--zinc-50); position: relative; overflow: hidden;
+    }
+    .data-strip-glow {
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(255,107,0,0.05), transparent);
+      pointer-events: none;
+    }
+    .data-strip-inner {
+      position: relative; z-index: 1;
+      display: flex; align-items: center; justify-content: space-between; gap: 32px;
+    }
+    .strip-left { display: flex; align-items: center; gap: 24px; }
+    .avatars { display: flex; margin-right: 8px; }
+    .avatar {
+      width: 48px; height: 48px; border-radius: 50%;
+      border: 4px solid white; background: var(--zinc-200);
+      overflow: hidden; margin-left: -16px;
+    }
+    .avatar:first-child { margin-left: 0; }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1); opacity: 0.5; }
+    .strip-text .title { font-size: 14px; font-weight: 700; color: var(--zinc-900); }
+    .strip-text .sub { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--zinc-500); margin-top: 2px; }
+    .strip-stats { display: flex; gap: 48px; text-align: center; }
+    .strip-stat-num { font-size: 24px; font-weight: 700; letter-spacing: -0.04em; color: var(--zinc-900); }
+    .strip-stat-num.green { color: var(--green); }
+    .strip-stat-num.orange { color: var(--orange); }
+    .strip-stat-label {
+      font-family: 'JetBrains Mono', monospace; font-size: 10px;
+      color: var(--zinc-500); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px;
+    }
+
+    /* ── TOOL SECTION ── */
+    .tool-section { padding: 96px 0; background: #F5F5F7; }
+    .tool-header { text-align: center; margin-bottom: 80px; }
+    .tool-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 4px 12px; border-radius: 999px;
+      background: rgba(255,107,0,0.1); color: var(--orange);
+      font-family: 'JetBrains Mono', monospace; font-size: 10px;
+      letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 24px;
+    }
+    .tool-h2 {
+      font-size: clamp(40px, 5vw, 64px); font-weight: 900;
+      letter-spacing: -0.04em; text-transform: uppercase;
+      font-style: italic; line-height: 0.9; color: var(--zinc-900);
+      margin-bottom: 24px;
+    }
+    .tool-h2 span { color: var(--orange); }
+    .tool-sub {
+      font-family: 'JetBrains Mono', monospace; font-size: 13px;
+      color: var(--zinc-500); text-transform: uppercase; letter-spacing: 0.2em;
+    }
+
+    /* Terminal card */
+    .terminal-cards { display: flex; flex-direction: column; gap: 32px; max-width: 900px; margin: 0 auto; }
+    .t-card {
+      border-radius: 24px; overflow: hidden;
+      background: #0a0a0c;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 40px 80px -20px rgba(0,0,0,0.6);
+    }
+    .t-card-bar {
+      height: 48px; background: rgba(0,0,0,0.4); backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px;
+    }
+    .t-bar-left { display: flex; align-items: center; gap: 12px; }
+    .t-dot-orange { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 10px rgba(255,107,0,0.5); }
+    .t-tier-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.4em; }
+    .t-bar-right { display: flex; align-items: center; gap: 16px; }
+    .t-status { font-family: 'JetBrains Mono', monospace; font-size: 8px; color: rgba(255,255,255,0.25); text-transform: uppercase; letter-spacing: 0.15em; display: flex; align-items: center; gap: 6px; }
+    .t-dot-green { width: 4px; height: 4px; border-radius: 50%; background: var(--green); }
+    .t-body { padding: 40px; color: white; }
+    .t-body-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: center; }
+    .t-inner-card {
+      background: rgba(22,22,26,0.9); backdrop-filter: blur(32px);
+      border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
+      padding: 32px; position: relative; overflow: hidden;
+    }
+    .t-inner-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(to right, var(--orange), transparent); }
+    .t-small-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: rgba(255,255,255,0.2); text-transform: uppercase; letter-spacing: 0.4em; margin-bottom: 8px; }
+    .t-title { font-size: 20px; font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.04em; line-height: 1.1; }
+    .price-compare {
+      display: flex; align-items: center; gap: 16px;
+      background: rgba(0,0,0,0.6); padding: 20px; border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.05); margin-top: 24px;
+    }
+    .price-local { flex: 1; }
+    .price-local .label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: rgba(255,255,255,0.2); text-transform: uppercase; }
+    .price-local .value { font-size: 28px; font-weight: 900; color: rgba(255,255,255,0.3); letter-spacing: -0.04em; }
+    .price-vs { color: rgba(255,255,255,0.1); font-weight: 900; font-style: italic; }
+    .price-r3up { flex: 1; text-align: right; }
+    .price-r3up .label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--green); text-transform: uppercase; }
+    .price-r3up .value { font-size: 36px; font-weight: 900; color: var(--green); letter-spacing: -0.04em; }
+    .price-r3up .profit { font-size: 10px; font-weight: 700; color: rgba(0,223,129,0.6); text-transform: uppercase; }
+    .t-phase { text-align: center; }
+    .globe-t {
+      width: 120px; height: 120px; border-radius: 50%; margin: 0 auto 16px;
+      background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 60px rgba(37,99,235,0.3);
+      position: relative;
+    }
+    .globe-t::before { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 1px solid rgba(37,99,235,0.3); animation: ping 3s ease-out infinite; }
+    .globe-icon { font-size: 52px; line-height: 1; }
+    .t-phase-title { font-size: 20px; font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.04em; }
+    .t-phase-sub { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: rgba(255,255,255,0.2); text-transform: uppercase; margin-top: 4px; }
+
+    /* Progress card */
+    .progress-card .t-inner-card::before { background: linear-gradient(to right, var(--green), transparent); }
+    .pct { font-size: 36px; font-weight: 900; color: var(--green); letter-spacing: -0.04em; }
+    .pct-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: rgba(255,255,255,0.3); text-transform: uppercase; }
+    .prog-bar-wrap { height: 20px; background: black; border-radius: 999px; border: 1px solid rgba(255,255,255,0.05); padding: 3px; margin: 24px 0; }
+    .prog-fill { height: 100%; width: 0; background: linear-gradient(to right, var(--green), #3b82f6); border-radius: 999px; box-shadow: 0 0 20px rgba(0,223,129,0.4); animation: progress 2.5s ease-out 0.5s both; }
+
+    /* ── FAQ ── */
+    .faq { padding: 96px 0; background: white; }
+    .faq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
+    .faq-img-wrap { position: relative; }
+    .faq-glow {
+      position: absolute; inset: -16px;
+      background: rgba(255,107,0,0.2); border-radius: 40px;
+      filter: blur(32px); pointer-events: none;
+      transition: background 0.7s;
+    }
+    .faq-img-wrap:hover .faq-glow { background: rgba(255,107,0,0.3); }
+    .faq-img-frame {
+      position: relative; border-radius: 24px; overflow: hidden;
+      border: 8px solid black; box-shadow: 0 32px 64px rgba(0,0,0,0.2);
+    }
+    .faq-img-frame img { width: 100%; aspect-ratio: 4/5; object-fit: cover; display: block; transition: transform 1s; }
+    .faq-img-wrap:hover img { transform: scale(1.05); }
+    .faq-overlay {
+      position: absolute; bottom: 0; left: 0; right: 0; padding: 32px;
+      background: linear-gradient(to top, black, transparent);
+    }
+    .faq-overlay-tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--green); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 8px; }
+    .faq-overlay-title { color: white; font-size: 20px; font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.04em; }
+    .faq-header { display: flex; align-items: center; gap: 12px; color: var(--orange); margin-bottom: 32px; }
+    .faq-header span { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.3em; }
+    .faq-items { display: flex; flex-direction: column; gap: 24px; }
+    .faq-item { border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 24px; }
+    .faq-q { font-size: 17px; font-weight: 900; text-transform: uppercase; font-style: italic; letter-spacing: -0.04em; margin-bottom: 8px; }
+    .faq-a { font-size: 14px; color: var(--zinc-500); font-weight: 500; line-height: 1.6; }
+
+    /* ── CTA / FOOTER ── */
+    .footer { background: white; border-top: 1px solid var(--zinc-200); padding: 80px 0 40px; }
+    .footer.tg { background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px; }
+    .footer-cta {
+      border-radius: 24px; border: 1px solid var(--zinc-200);
+      background: linear-gradient(135deg, rgba(255,107,0,0.05), transparent, rgba(0,223,129,0.05));
+      padding: 64px 48px; text-align: center; margin-bottom: 80px; position: relative; overflow: hidden;
+    }
+    .cta-h2 {
+      font-size: clamp(28px, 4vw, 52px); font-weight: 700;
+      letter-spacing: -0.04em; text-transform: uppercase; font-style: italic;
+      color: var(--zinc-900); margin-bottom: 24px;
+    }
+    .cta-h2 span { color: var(--orange); }
+    .cta-p { font-size: 18px; color: var(--zinc-500); font-weight: 300; line-height: 1.6; max-width: 640px; margin: 0 auto 40px; }
+    .cta-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 64px; padding-bottom: 64px; border-bottom: 1px solid var(--zinc-100); }
+    .footer-brand { display: flex; align-items: center; gap: 8px; margin-bottom: 24px; }
+    .footer-brand-name { font-size: 20px; font-weight: 700; letter-spacing: -0.04em; text-transform: uppercase; font-style: italic; }
+    .footer-desc { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--zinc-500); max-width: 280px; line-height: 1.6; text-transform: uppercase; letter-spacing: -0.02em; }
+    .footer-col-title { font-family: 'JetBrains Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 24px; }
+    .footer-links { list-style: none; display: flex; flex-direction: column; gap: 16px; }
+    .footer-links li { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--zinc-500); text-transform: uppercase; cursor: pointer; transition: color 0.15s; }
+    .footer-links li:hover { color: var(--zinc-900); }
+    .footer-bottom { display: flex; align-items: center; justify-content: space-between; }
+    .footer-copy { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--zinc-400); text-transform: uppercase; letter-spacing: 0.15em; }
+    .footer-right { display: flex; align-items: center; gap: 24px; }
+    .net-status { display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--green); text-transform: uppercase; }
+    .net-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) {
+      .hero-inner { grid-template-columns: 1fr; padding-top: 100px; }
+      .tier-grid { grid-template-columns: repeat(2, 1fr); }
+      .faq-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+      .nav-links, .nav-stats { display: none; }
+      .t-body-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .tier-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr; }
+    }
+
+    /* SVG icons inline */
+    .icon { display: inline-block; vertical-align: middle; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ NAVBAR ══════════════ -->
+<nav>
+  <div class="nav-inner">
+    <div style="display:flex;align-items:center;gap:32px">
+      <a href="#" class="nav-logo">
+        <div class="logo-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        R3UP
+      </a>
+      <div class="nav-links">
+        <button class="nav-link active">Home</button>
+        <button class="nav-link">Solutions</button>
+        <button class="nav-link">Blog</button>
+        <button class="nav-link">Contact</button>
+        <div class="nav-cmd">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          CMD: /EXECUTE_MATCH
+        </div>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="nav-stats">
+        <div>
+          <div class="nav-stat-label">Global_Yield</div>
+          <div class="nav-stat-value" style="color:var(--green)">+24.8%</div>
+        </div>
+        <div>
+          <div class="nav-stat-label">Liquidity</div>
+          <div class="nav-stat-value">$42.8M</div>
+        </div>
+      </div>
+      <button class="btn-auth">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Authenticate
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════ HERO ══════════════ -->
+<section class="hero terminal-grid">
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+    <!-- Left -->
+    <div>
+      <div class="hero-badge">
+        <div class="dot pulse"></div>
+        System_Status: Execution_Layer_Active
+      </div>
+      <h1 class="hero-h1">Maximize <br><span>Returns.</span></h1>
+      <p class="hero-p">
+        Every day your devices sit on a shelf, they lose <strong>0.5% value.</strong>
+        Our AI hunts for buyers in 30+ countries to capture the <em>Brazil Gap.</em>
+      </p>
+      <div class="hero-btns">
+        <button class="btn-primary">Upload Manifest</button>
+        <button class="btn-secondary">Live_Yield.exe</button>
+      </div>
+    </div>
+
+    <!-- Right: Globe -->
+    <div class="hero-right">
+      <div class="hero-glow"></div>
+      <div class="hero-terminal">
+        <div class="globe-canvas">
+          <div class="globe-coord">
+            <div>LAT: 25.7617° N</div>
+            <div>LNG: 80.1918° W</div>
+            <div class="status">STATUS: SYNCING...</div>
+          </div>
+          <div class="globe-sphere">
+            <div class="globe-lines"></div>
+            <!-- Ping dots -->
+            <div class="globe-ping" style="top:35%;left:25%"></div>
+            <div class="globe-ping" style="top:55%;left:65%;animation-delay:0.8s"></div>
+            <div class="globe-ping" style="top:28%;left:58%;animation-delay:1.4s"></div>
+            <div class="globe-ping" style="top:70%;left:40%;animation-delay:0.3s"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating widget -->
+      <div class="hero-widget float">
+        <div class="widget-tag">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Smart-Match™ Found
+        </div>
+        <div class="widget-title">iPhone 15 Pro (500u)</div>
+        <div class="widget-sub">Miami → Dubai Hub</div>
+        <div class="widget-delta">+$14,200 Δ</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom ribbon -->
+  <div class="hero-ribbon">
+    <div class="ribbon-track">
+      <div class="ribbon-inner">
+        <span class="ribbon-item">iPhone 15 Pro: <span class="ribbon-price">$845</span> <span class="ribbon-profit">(+$85 Profit)</span></span>
+        <span class="ribbon-item">S24 Ultra: <span class="ribbon-price">$910</span> <span class="ribbon-profit">(+$110 Profit)</span></span>
+        <span class="ribbon-item">MacBook M3: <span class="ribbon-price">$1,450</span> <span class="ribbon-profit">(+$215 Profit)</span></span>
+        <span class="ribbon-item">iPad Pro: <span class="ribbon-price">$750</span> <span class="ribbon-profit">(+$95 Profit)</span></span>
+        <span class="ribbon-item">iPhone 15 Pro: <span class="ribbon-price">$845</span> <span class="ribbon-profit">(+$85 Profit)</span></span>
+        <span class="ribbon-item">S24 Ultra: <span class="ribbon-price">$910</span> <span class="ribbon-profit">(+$110 Profit)</span></span>
+        <span class="ribbon-item">MacBook M3: <span class="ribbon-price">$1,450</span> <span class="ribbon-profit">(+$215 Profit)</span></span>
+        <span class="ribbon-item">iPad Pro: <span class="ribbon-price">$750</span> <span class="ribbon-profit">(+$95 Profit)</span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ ECOSYSTEM ══════════════ -->
+<section class="ecosystem tg" style="padding-top:96px;padding-bottom:96px">
+  <div class="container">
+    <div class="section-center">
+      <div class="section-badge">The Infrastructure</div>
+      <h2 class="section-h2">The <span>Network</span> Architecture.</h2>
+      <p class="section-p">
+        From trade-in widgets to enterprise-grade execution, R3UP's multi-tier
+        ecosystem ensures your inventory is always moving at peak efficiency.
+      </p>
+    </div>
+
+    <div class="tier-grid">
+      <!-- Tier 0 -->
+      <div class="tier-card" style="background:rgba(0,223,129,0.05);border-color:rgba(0,223,129,0.2)">
+        <div class="tier-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        </div>
+        <div class="tier-label" style="color:var(--green)">Tier 0</div>
+        <div class="tier-name">Trade-In Widgets</div>
+        <div class="tier-desc">Buyback sites and retail intake widgets for seamless device ingestion.</div>
+      </div>
+      <!-- Tier 1 -->
+      <div class="tier-card" style="background:rgba(255,107,0,0.05);border-color:rgba(255,107,0,0.2)">
+        <div class="tier-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <div class="tier-label" style="color:var(--orange)">Tier 1</div>
+        <div class="tier-name">Liquidity Layer</div>
+        <div class="tier-desc">Automated arbitrage matching with instant execution capabilities.</div>
+      </div>
+      <!-- Tier 2 -->
+      <div class="tier-card" style="background:rgba(16,185,129,0.05);border-color:rgba(16,185,129,0.15)">
+        <div class="tier-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <div class="tier-label" style="color:#059669">Tier 2</div>
+        <div class="tier-name">Logistics Hub</div>
+        <div class="tier-desc">End-to-end global shipping and grading verification network.</div>
+      </div>
+      <!-- Tier 3 -->
+      <div class="tier-card" style="background:var(--zinc-100);border-color:var(--zinc-200)">
+        <div class="tier-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--zinc-900)" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+        </div>
+        <div class="tier-label" style="color:var(--zinc-900)">Tier 3</div>
+        <div class="tier-name">Enterprise</div>
+        <div class="tier-desc">Full-stack asset management for global corporations and OEMs.</div>
+      </div>
+    </div>
+
+    <!-- Data strip -->
+    <div class="data-strip">
+      <div class="data-strip-glow"></div>
+      <div class="data-strip-inner">
+        <div class="strip-left">
+          <div class="avatars">
+            <div class="avatar"><img src="https://picsum.photos/seed/user1/100/100" alt="node" /></div>
+            <div class="avatar"><img src="https://picsum.photos/seed/user2/100/100" alt="node" /></div>
+            <div class="avatar"><img src="https://picsum.photos/seed/user3/100/100" alt="node" /></div>
+            <div class="avatar"><img src="https://picsum.photos/seed/user4/100/100" alt="node" /></div>
+          </div>
+          <div class="strip-text">
+            <div class="title">Active Widgets: 4,281</div>
+            <div class="sub">Real-time intake active across 12 regions</div>
+          </div>
+        </div>
+        <div class="strip-stats">
+          <div>
+            <div class="strip-stat-num">1.2s</div>
+            <div class="strip-stat-label">Avg. Match Latency</div>
+          </div>
+          <div>
+            <div class="strip-stat-num green">$14.2M</div>
+            <div class="strip-stat-label">Daily Liquidity</div>
+          </div>
+          <div>
+            <div class="strip-stat-num orange">99.9%</div>
+            <div class="strip-stat-label">Execution Uptime</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ TOOLSET ══════════════ -->
+<section class="tool-section">
+  <div class="container">
+    <div class="tool-header">
+      <div class="tool-badge">/System_Intelligence</div>
+      <h2 class="tool-h2">The <span>Empire</span><br>Toolset.</h2>
+      <p class="tool-sub">SYSTEM_VERSION_2026 // READY_FOR_DEPLOYMENT</p>
+    </div>
+
+    <div class="terminal-cards">
+
+      <!-- Tier 0: Intake Widget -->
+      <div class="t-card">
+        <div class="t-card-bar">
+          <div class="t-bar-left">
+            <div class="t-dot-orange pulse"></div>
+            <span class="t-tier-label">TIER 0 // Terminal_Output_T0</span>
+          </div>
+          <div class="t-bar-right">
+            <span class="t-status"><div class="t-dot-green"></div> System_Online</span>
+            <span class="t-status">v4.2.0_STABLE</span>
+          </div>
+        </div>
+        <div class="t-body">
+          <div class="t-body-grid">
+            <div class="t-inner-card">
+              <div class="t-small-label">R3UP Edge Intake Widget</div>
+              <div class="t-title">Never Overpay Again.<br>Lock in Your Margin.</div>
+              <div class="price-compare">
+                <div class="price-local">
+                  <div class="label">Local Price</div>
+                  <div class="value">$650</div>
+                </div>
+                <div class="price-vs">vs.</div>
+                <div class="price-r3up">
+                  <div class="label">R3UP Global Price</div>
+                  <div class="value">$890</div>
+                  <div class="profit">+$240 Profit</div>
+                </div>
+              </div>
+            </div>
+            <div class="t-phase">
+              <div class="globe-t">
+                <span class="globe-icon">📱</span>
+              </div>
+              <div class="t-phase-title">Complete<br>Device Intake</div>
+              <div class="t-phase-sub">Asset #4 // Verified</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tier 1: Intelligence Desk -->
+      <div class="t-card">
+        <div class="t-card-bar">
+          <div class="t-bar-left">
+            <div class="t-dot-orange pulse"></div>
+            <span class="t-tier-label">TIER 1 // Terminal_Output_T1</span>
+          </div>
+          <div class="t-bar-right">
+            <span class="t-status"><div class="t-dot-green"></div> System_Online</span>
+            <span class="t-status">v4.2.0_STABLE</span>
+          </div>
+        </div>
+        <div class="t-body">
+          <div class="t-body-grid">
+            <div class="t-inner-card" style="--card-accent:var(--green)">
+              <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,var(--green),transparent)"></div>
+              <div class="t-small-label">Global Liquidity Terminal</div>
+              <div class="t-title">Brazil Gap Yield</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px">
+                <div style="font-size:36px;font-weight:900;color:var(--green);letter-spacing:-0.04em">+24.8%</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:rgba(255,255,255,0.3);text-transform:uppercase">Brazil Gap Yield</div>
+              </div>
+              <!-- Mini bar chart -->
+              <div style="height:60px;display:flex;align-items:flex-end;gap:4px;margin-top:20px">
+                <div style="flex:1;background:rgba(255,255,255,0.05);border-radius:3px 3px 0 0;height:30%"></div>
+                <div style="flex:1;background:rgba(255,255,255,0.05);border-radius:3px 3px 0 0;height:45%"></div>
+                <div style="flex:1;background:rgba(255,255,255,0.05);border-radius:3px 3px 0 0;height:35%"></div>
+                <div style="flex:1;background:rgba(255,255,255,0.05);border-radius:3px 3px 0 0;height:60%"></div>
+                <div style="flex:1;background:rgba(255,255,255,0.05);border-radius:3px 3px 0 0;height:55%"></div>
+                <div style="flex:1;background:rgba(255,255,255,0.05);border-radius:3px 3px 0 0;height:90%"></div>
+                <div style="flex:1;background:rgba(255,255,255,0.05);border-radius:3px 3px 0 0;height:70%"></div>
+                <div style="flex:1;background:#3b82f6;border-radius:3px 3px 0 0;height:100%;box-shadow:0 0 20px rgba(59,130,246,0.4)"></div>
+                <div style="flex:1;background:rgba(255,255,255,0.05);border-radius:3px 3px 0 0;height:80%"></div>
+                <div style="flex:1;background:rgba(255,255,255,0.05);border-radius:3px 3px 0 0;height:95%"></div>
+                <div style="flex:1;background:rgba(255,255,255,0.05);border-radius:3px 3px 0 0;height:65%"></div>
+                <div style="flex:1;background:rgba(255,255,255,0.05);border-radius:3px 3px 0 0;height:85%"></div>
+              </div>
+            </div>
+            <div class="t-phase">
+              <div class="globe-t" style="box-shadow:0 0 60px rgba(59,130,246,0.3)">
+                <span class="globe-icon spin-slow" style="font-size:52px">🌐</span>
+              </div>
+              <div class="t-phase-title">God View</div>
+              <div class="t-phase-sub">Global_Liquidity_Active</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tier 2: Automated Execution -->
+      <div class="t-card progress-card">
+        <div class="t-card-bar">
+          <div class="t-bar-left">
+            <div class="t-dot-orange pulse"></div>
+            <span class="t-tier-label">TIER 2 // Terminal_Output_T2</span>
+          </div>
+          <div class="t-bar-right">
+            <span class="t-status"><div class="t-dot-green"></div> System_Online</span>
+            <span class="t-status">v4.2.0_STABLE</span>
+          </div>
+        </div>
+        <div class="t-body">
+          <div class="t-body-grid">
+            <div style="aspect-ratio:4/5;background:var(--zinc-800);border-radius:20px;overflow:hidden;position:relative;border:1px solid rgba(255,255,255,0.05)">
+              <img src="https://picsum.photos/seed/wholesale-devices/600/750" style="width:100%;height:100%;object-fit:cover;filter:grayscale(1) brightness(0.5)" referrerpolicy="no-referrer" />
+              <div style="position:absolute;inset:0;background:linear-gradient(to top,black 0%,rgba(0,0,0,0.4) 50%,transparent 100%)"></div>
+              <div style="position:absolute;top:20px;right:20px;display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+                <div style="background:rgba(255,255,255,0.9);padding:6px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:900;display:flex;align-items:center;gap:6px"><div style="width:6px;height:6px;border-radius:50%;background:#22c55e"></div>Cosmetically graded</div>
+                <div style="background:rgba(255,255,255,0.9);padding:6px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:900;display:flex;align-items:center;gap:6px"><div style="width:6px;height:6px;border-radius:50%;background:#3b82f6"></div>Securely erased</div>
+                <div style="background:rgba(255,255,255,0.9);padding:6px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:900;display:flex;align-items:center;gap:6px"><div style="width:6px;height:6px;border-radius:50%;background:var(--orange)"></div>Functionality tested</div>
+              </div>
+              <div style="position:absolute;bottom:24px;left:24px">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--orange);text-transform:uppercase;letter-spacing:0.2em;margin-bottom:6px">Batch ID: R3-WH-092</div>
+                <div style="font-size:18px;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:-0.04em;color:white">Wholesale Inventory</div>
+              </div>
+            </div>
+            <div class="t-inner-card" style="--card-accent:var(--green)">
+              <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,var(--green),transparent)"></div>
+              <div class="t-small-label">Carrier Syndicate</div>
+              <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <div class="t-title">Funding<br>Progress</div>
+                <div style="text-align:right">
+                  <div class="pct">85%</div>
+                  <div class="pct-label">Funded</div>
+                </div>
+              </div>
+              <div class="prog-bar-wrap"><div class="prog-fill"></div></div>
+              <div style="background:rgba(0,0,0,0.4);padding:20px;border-radius:12px;border:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center">
+                <div>
+                  <div style="font-size:14px;font-weight:900;text-transform:uppercase;font-style:italic;letter-spacing:-0.04em">Trust Moat Shield</div>
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,0.2);text-transform:uppercase;margin-top:4px">Asset #2</div>
+                </div>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="margin-top:80px;text-align:center">
+      <p class="mono" style="color:var(--zinc-400);font-size:10px;margin-bottom:24px;letter-spacing:0.3em">SELECT_TIER_TO_COMMAND</p>
+      <button class="btn-primary" style="border-radius:999px;font-style:italic">Enter the R3UP Empire</button>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ FAQ ══════════════ -->
+<section class="faq">
+  <div class="container">
+    <div class="faq-grid">
+      <div class="faq-img-wrap">
+        <div class="faq-glow"></div>
+        <div class="faq-img-frame">
+          <img src="https://picsum.photos/seed/warehouse-ops-r3up/800/1000" alt="R3UP Warehouse Operations — Miami Hub" referrerpolicy="no-referrer" />
+          <div class="faq-overlay">
+            <div class="faq-overlay-tag">/Physical_Verification_Active</div>
+            <div class="faq-overlay-title">Miami Hub // Bay 04</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="faq-header">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>Common_Inquiries</span>
+        </div>
+        <div class="faq-items">
+          <div class="faq-item">
+            <div class="faq-q">Is the capital in Group Buys insured?</div>
+            <div class="faq-a">Yes. Every Tier 2 Syndicate buy is backed by a physical escrow and 100% insurance on the inventory from origin to hub.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">Who handles the actual grading?</div>
+            <div class="faq-a">Our trained warehouse agents use R3UP's proprietary diagnostic tools to verify every single unit. No ghost-grading.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">How fast is the payout?</div>
+            <div class="faq-a">Once the Digital WorkForce verifies the lot at the hub, payout is triggered via smart-contract within 4 hours.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">I'm a one-man shop, is this too big for me?</div>
+            <div class="faq-a">R3UP was built to make small shops act like global corporations. Whether you're buying 5 units or 5,000, our Digital Workforce handles the logistics and matching.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ FOOTER / CTA ══════════════ -->
+<footer class="footer tg">
+  <div class="container">
+    <div class="footer-cta">
+      <h2 class="cta-h2">Stop Waiting. <br>Start <span>Matching.</span></h2>
+      <p class="cta-p">
+        Every day your inventory sits on a shelf, it loses 0.5% value.
+        Upload your manifest now and let our AI hunt for your global buyer.
+      </p>
+      <div class="cta-btns">
+        <button class="btn-primary">Upload My List</button>
+        <button class="btn-secondary">Request Strategy Call.sh</button>
+      </div>
+    </div>
+
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">
+          <div class="logo-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <span class="footer-brand-name">R3UP Nation</span>
+        </div>
+        <p class="footer-desc">The AI-driven brokerage for sustainable IT asset management. Maximizing recovery value through global intelligence.</p>
+      </div>
+      <div>
+        <div class="footer-col-title" style="color:var(--orange)">Ecosystem</div>
+        <ul class="footer-links">
+          <li style="text-decoration:underline;text-decoration-color:rgba(255,107,0,0.3)">The AI Brokerage</li>
+          <li style="text-decoration:underline;text-decoration-color:rgba(255,107,0,0.3)">Smart-Match™</li>
+          <li style="text-decoration:underline;text-decoration-color:rgba(255,107,0,0.3)">Tier 0 Sensors</li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title" style="color:var(--zinc-400)">Company</div>
+        <ul class="footer-links">
+          <li>About Us</li>
+          <li>Pricing</li>
+          <li>Security</li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title" style="color:var(--zinc-400)">Legal</div>
+        <ul class="footer-links">
+          <li>Privacy.pdf</li>
+          <li>Terms.exe</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2026 R3UP_NATION // SYSTEM_Sovereignty_Active</div>
+      <div class="footer-right">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--zinc-400)" stroke-width="2" style="cursor:pointer"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--zinc-400)" stroke-width="2" style="cursor:pointer"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg>
+        <div class="net-status">
+          <div class="net-dot pulse"></div>
+          NETWORK_STATUS: OPTIMAL
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
