@@ -21,7 +21,7 @@ export default function R3UPHero() {
             Maximize <br /> <span className="text-[#FF6B00]">Returns.</span>
           </h1>
           
-          <p className="max-w-md text-zinc-500 text-lg font-light leading-relaxed border-l-2 border-[#FF6B00] pl-6">
+          <p className="max-w-md text-zinc-600 text-lg font-light leading-relaxed">
             Every day your devices sit on a shelf, they lose <span className="text-zinc-900 font-bold">0.5% value.</span> 
             Our AI hunts for buyers in 30+ countries to capture the <span className="text-[#00DF81]">Brazil Gap.</span>
           </p>
