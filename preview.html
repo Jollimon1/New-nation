@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>R3UP — Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Barlow:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange: #FF6B00;
+      --green: #00C853;
+      --blue: #4488FF;
+      --black: #080808;
+      --zinc-900: #18181b;
+      --zinc-800: #27272a;
+      --zinc-700: #3f3f46;
+      --zinc-600: #52525b;
+      --zinc-500: #71717a;
+      --zinc-400: #a1a1aa;
+      --zinc-300: #d4d4d8;
+      --zinc-200: #e4e4e7;
+      --zinc-100: #f4f4f5;
+      --zinc-50: #fafafa;
+    }
+
+    body {
+      font-family: 'Barlow', system-ui, sans-serif;
+      background: #F5F5F7;
+      color: var(--zinc-900);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .mono  { font-family: 'IBM Plex Mono', monospace; }
+    .cond  { font-family: 'Barlow Condensed', sans-serif; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes marquee   { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+    @keyframes float     { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    @keyframes pulse     { 0%,100%{opacity:1} 50%{opacity:.4} }
+    @keyframes ping      { to{transform:scale(3);opacity:0} }
+    @keyframes spin-slow { to{transform:rotate(360deg)} }
+    @keyframes progress  { from{width:0} to{width:85%} }
+
+    .marquee    { display:flex; width:max-content; animation:marquee 30s linear infinite; }
+    .float      { animation:float 4s ease-in-out infinite; }
+    .pulse-anim { animation:pulse 2s ease-in-out infinite; }
+    .spin-slow  { animation:spin-slow 40s linear infinite; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .marquee, .float, .pulse-anim, .spin-slow { animation: none; }
+      * { transition-duration: 0.01ms !important; }
+    }
+
+    /* ── UTILS ── */
+    .terminal-grid {
+      background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0);
+      background-size: 20px 20px;
+    }
+    .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+
+    /* ── NAVBAR ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      border-bottom: 1px solid var(--zinc-200);
+      background: rgba(255,255,255,0.8); backdrop-filter: blur(20px);
+    }
+    .nav-inner {
+      max-width: 1280px; margin: 0 auto; padding: 0 24px;
+      height: 80px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 24px; font-weight: 900; letter-spacing: -0.02em;
+      font-style: italic; text-transform: uppercase;
+      display: flex; align-items: center; gap: 10px;
+      color: var(--zinc-900); text-decoration: none;
+    }
+    .logo-icon {
+      width: 32px; height: 32px; background: var(--orange);
+      border-radius: 3px; display: flex; align-items: center; justify-content: center;
+    }
+    .nav-links { display: flex; align-items: center; gap: 24px; }
+    .nav-link {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.15em; color: var(--zinc-500);
+      background: none; border: none; cursor: pointer; transition: color 0.15s;
+    }
+    .nav-link.active { color: var(--orange); }
+    .nav-link:hover  { color: var(--zinc-900); }
+    .nav-cmd {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 12px; background: var(--zinc-100);
+      border: 1px solid var(--zinc-200); border-radius: 3px;
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--zinc-500);
+    }
+    .nav-stats { display: flex; align-items: center; gap: 16px; margin-right: 16px; padding-right: 16px; border-right: 1px solid var(--zinc-200); }
+    .nav-stat-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--zinc-400); text-transform: uppercase; }
+    .nav-stat-value { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; letter-spacing: -0.03em; }
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .btn-auth {
+      height: 40px; padding: 0 24px; border-radius: 3px;
+      background: var(--zinc-900); color: white;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.15em;
+      border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;
+      transition: background 0.15s;
+    }
+    .btn-auth:hover { background: var(--orange); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh; background: white; color: var(--zinc-900);
+      overflow: hidden; position: relative;
+      border-bottom: 1px solid var(--zinc-200);
+    }
+    .hero-grid {
+      position: absolute; inset: 0;
+      background: linear-gradient(to right,rgba(0,0,0,0.05) 1px,transparent 1px),
+                  linear-gradient(to bottom,rgba(0,0,0,0.05) 1px,transparent 1px);
+      background-size: 40px 40px; pointer-events: none;
+    }
+    .hero-inner {
+      max-width: 1280px; margin: 0 auto; padding: 128px 24px 0;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 64px;
+      align-items: center; position: relative; z-index: 10;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 4px 12px; border: 1px solid rgba(0,200,83,0.3);
+      background: rgba(0,200,83,0.05); color: var(--green);
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+      letter-spacing: 0.15em; text-transform: uppercase;
+    }
+    .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+    .hero-h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(56px, 7vw, 96px); font-weight: 900;
+      letter-spacing: -0.02em; line-height: 0.85;
+      text-transform: uppercase; font-style: italic;
+      margin: 24px 0;
+    }
+    .hero-h1 span { color: var(--orange); }
+    .hero-p {
+      max-width: 440px; color: var(--zinc-600); font-size: 18px;
+      font-weight: 300; line-height: 1.6;
+    }
+    .hero-p strong { color: var(--zinc-900); font-weight: 700; }
+    .hero-p em     { color: var(--green); font-style: normal; font-weight: 700; }
+    .hero-btns { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 32px; }
+    .btn-primary {
+      height: 56px; padding: 0 40px; background: var(--orange); color: #000;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em;
+      border: none; cursor: pointer; border-radius: 2px;
+      box-shadow: 0 0 25px rgba(255,107,0,0.2);
+      transition: background 0.15s, color 0.15s;
+    }
+    .btn-primary:hover { background: var(--zinc-900); color: white; }
+    .btn-secondary {
+      height: 56px; padding: 0 40px; border: 1px solid var(--zinc-200);
+      background: none; color: var(--zinc-600);
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      cursor: pointer; border-radius: 2px; transition: background 0.15s;
+    }
+    .btn-secondary:hover { background: var(--zinc-50); }
+    .hero-right { position: relative; }
+    .hero-glow {
+      position: absolute; inset: -80px;
+      background: rgba(255,107,0,0.1); border-radius: 50%; filter: blur(120px);
+      pointer-events: none;
+    }
+    .hero-terminal {
+      position: relative; border: 1px solid var(--zinc-200);
+      background: rgba(255,255,255,0.5); backdrop-filter: blur(8px); padding: 8px;
+    }
+    .hero-terminal::before {
+      content:''; position:absolute; top:-1px; left:-1px; width:8px; height:8px;
+      border-top:2px solid var(--orange); border-left:2px solid var(--orange);
+    }
+    .hero-terminal::after {
+      content:''; position:absolute; bottom:-1px; right:-1px; width:8px; height:8px;
+      border-bottom:2px solid var(--orange); border-right:2px solid var(--orange);
+    }
+    .globe-canvas {
+      width:100%; aspect-ratio:1;
+      background: radial-gradient(circle at 40% 40%,#1a1a2e 0%,#0a0a0c 60%,#000 100%);
+      border-radius:4px; position:relative; overflow:hidden;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .globe-sphere {
+      width:280px; height:280px; border-radius:50%;
+      background: radial-gradient(circle at 35% 35%,rgba(255,107,0,0.15) 0%,rgba(0,200,83,0.05) 40%,rgba(0,0,0,0.8) 70%);
+      border:1px solid rgba(255,255,255,0.1); position:relative;
+      box-shadow:0 0 80px rgba(255,107,0,0.15),inset 0 0 60px rgba(0,0,0,0.5);
+    }
+    .globe-lines {
+      position:absolute; inset:0; border-radius:50%; overflow:hidden; opacity:0.2;
+      background:
+        repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(255,255,255,0.3) 28px,rgba(255,255,255,0.3) 29px),
+        repeating-linear-gradient(90deg,transparent,transparent 28px,rgba(255,255,255,0.1) 28px,rgba(255,255,255,0.1) 29px);
+    }
+    .globe-ping {
+      position:absolute; width:8px; height:8px; border-radius:50%;
+      background:var(--orange); box-shadow:0 0 12px var(--orange),0 0 24px rgba(255,107,0,0.5);
+    }
+    .globe-ping::after {
+      content:''; position:absolute; inset:-6px; border-radius:50%;
+      border:1px solid rgba(255,107,0,0.4); animation:ping 2s ease-out infinite;
+    }
+    .globe-coord {
+      position:absolute; top:12px; left:12px;
+      font-family:'IBM Plex Mono',monospace; font-size:8px;
+      color:rgba(255,255,255,0.4); line-height:1.6;
+    }
+    .globe-coord .status { color:var(--green); }
+    .hero-widget {
+      position:absolute; top:32px; right:0;
+      background:rgba(255,255,255,0.9); backdrop-filter:blur(20px);
+      border:1px solid var(--zinc-200); padding:16px; border-radius:3px;
+      box-shadow:0 20px 40px rgba(0,0,0,0.1);
+      font-family:'IBM Plex Mono',monospace; min-width:200px;
+    }
+    .widget-tag { font-size:9px; color:var(--green); text-transform:uppercase; display:flex; align-items:center; gap:6px; margin-bottom:8px; }
+    .widget-title { font-size:12px; font-weight:700; color:var(--zinc-900); }
+    .widget-sub   { font-size:10px; color:var(--zinc-400); margin-top:4px; }
+    .widget-delta { margin-top:8px; text-align:right; font-size:12px; font-weight:700; color:var(--orange); }
+    .hero-ribbon {
+      position:absolute; bottom:0; width:100%;
+      background:rgba(255,255,255,0.8); backdrop-filter:blur(12px);
+      border-top:1px solid var(--zinc-100); padding:16px 0; overflow:hidden;
+    }
+    .ribbon-inner {
+      display:flex; gap:64px; white-space:nowrap;
+      font-family:'IBM Plex Mono',monospace; font-size:10px;
+      color:var(--zinc-500); text-transform:uppercase; letter-spacing:0.15em;
+      animation:marquee 30s linear infinite;
+    }
+    .ribbon-item    { display:flex; align-items:center; gap:8px; }
+    .ribbon-price   { color:var(--green); font-weight:700; }
+    .ribbon-profit  { color:var(--orange); }
+
+    /* ── ECOSYSTEM ── */
+    .ecosystem { padding:96px 0; background:white; border-top:1px solid var(--zinc-200); }
+    .section-center { text-align:center; margin-bottom:80px; }
+    .section-badge {
+      display:inline-flex; align-items:center; gap:8px; padding:4px 12px;
+      border-radius:999px; border:1px solid var(--zinc-200); background:var(--zinc-50);
+      color:var(--zinc-500); font-family:'IBM Plex Mono',monospace; font-size:10px;
+      letter-spacing:0.15em; text-transform:uppercase; margin-bottom:16px;
+    }
+    .section-h2 {
+      font-family:'Barlow Condensed',sans-serif;
+      font-size:clamp(32px,4vw,56px); font-weight:800; letter-spacing:-0.02em;
+      font-style:italic; text-transform:uppercase; color:var(--zinc-900);
+    }
+    .section-h2 span { color:var(--orange); }
+    .section-p { color:var(--zinc-600); font-size:18px; line-height:1.6; max-width:640px; margin:16px auto 0; font-weight:300; }
+    .tier-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:32px; }
+    .tier-card { padding:32px; border-radius:16px; border:1px solid; transition:box-shadow 0.2s; }
+    .tier-card:hover { box-shadow:0 20px 40px rgba(0,0,0,0.08); }
+    .tier-icon {
+      width:48px; height:48px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+      border:1px solid var(--zinc-200); background:white;
+      box-shadow:0 1px 4px rgba(0,0,0,0.06); margin-bottom:24px;
+    }
+    .tier-label { font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.15em; margin-bottom:8px; }
+    .tier-name  { font-family:'Barlow Condensed',sans-serif; font-size:22px; font-weight:700; color:var(--zinc-900); margin-bottom:8px; }
+    .tier-desc  { font-size:14px; color:var(--zinc-600); line-height:1.6; }
+    .data-strip { margin-top:80px; padding:32px; border-radius:24px; border:1px solid var(--zinc-200); background:var(--zinc-50); position:relative; overflow:hidden; }
+    .data-strip-glow { position:absolute; inset:0; background:radial-gradient(circle at 50% 50%,rgba(255,107,0,0.05),transparent); pointer-events:none; }
+    .data-strip-inner { position:relative; z-index:1; display:flex; align-items:center; justify-content:space-between; gap:32px; }
+    .strip-left  { display:flex; align-items:center; gap:24px; }
+    .avatars     { display:flex; margin-right:8px; }
+    .avatar      { width:48px; height:48px; border-radius:50%; border:4px solid white; background:var(--zinc-200); overflow:hidden; margin-left:-16px; }
+    .avatar:first-child { margin-left:0; }
+    .avatar img  { width:100%; height:100%; object-fit:cover; filter:grayscale(1); opacity:0.5; }
+    .strip-text .title { font-size:14px; font-weight:700; color:var(--zinc-900); }
+    .strip-text .sub   { font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--zinc-500); margin-top:2px; }
+    .strip-stats        { display:flex; gap:48px; text-align:center; }
+    .strip-stat-num     { font-family:'Barlow Condensed',sans-serif; font-size:28px; font-weight:800; letter-spacing:-0.02em; color:var(--zinc-900); }
+    .strip-stat-num.green  { color:var(--green); }
+    .strip-stat-num.orange { color:var(--orange); }
+    .strip-stat-label   { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--zinc-500); text-transform:uppercase; letter-spacing:0.1em; margin-top:2px; }
+
+    /* ── EMPIRE TOOLSET SLIDER ── */
+    .tool-section { padding:96px 0; background:#F5F3EE; }
+    .tool-header  { text-align:center; margin-bottom:64px; }
+    .tool-badge {
+      display:inline-flex; align-items:center; gap:8px; padding:4px 12px;
+      background:rgba(255,107,0,0.1); color:var(--orange);
+      font-family:'IBM Plex Mono',monospace; font-size:10px;
+      letter-spacing:0.2em; text-transform:uppercase; margin-bottom:24px;
+    }
+    .tool-h2 {
+      font-family:'Barlow Condensed',sans-serif;
+      font-size:clamp(48px,6vw,80px); font-weight:900;
+      letter-spacing:-0.02em; text-transform:uppercase;
+      font-style:italic; line-height:0.9; color:var(--zinc-900); margin-bottom:16px;
+    }
+    .tool-h2 span { color:var(--orange); }
+    .tool-sub {
+      font-family:'IBM Plex Mono',monospace; font-size:11px;
+      color:var(--zinc-500); text-transform:uppercase; letter-spacing:0.2em;
+    }
+
+    /* Tab bar */
+    .empire-tab-wrap {
+      max-width:680px; margin:0 auto 40px; padding:0 24px;
+    }
+    .empire-tab-bar {
+      display:flex; gap:4px; background:rgba(24,24,27,0.05);
+      padding:4px; border-radius:10px; overflow-x:auto;
+    }
+    .empire-tab {
+      flex:1; white-space:nowrap; padding:10px 12px; border-radius:7px;
+      font-family:'IBM Plex Mono',monospace; font-size:10px;
+      text-transform:uppercase; letter-spacing:0.1em;
+      border:none; cursor:pointer; transition:all 0.14s;
+      background:transparent; color:var(--zinc-500);
+    }
+    .empire-tab:hover   { color:var(--zinc-900); }
+    .empire-tab.active  { background:var(--zinc-900); color:white; box-shadow:0 1px 4px rgba(0,0,0,0.2); }
+
+    /* Card stack */
+    .empire-stack {
+      position:relative; max-width:960px; margin:0 auto; padding:0 24px;
+    }
+    .empire-card-bg {
+      position:absolute; left:24px; right:24px; bottom:0; border-radius:18px;
+    }
+    .empire-card-bg-2 { top:-12px; transform:rotate(1.6deg); background:#3f3f46; opacity:0.18; }
+    .empire-card-bg-1 { top:-6px;  transform:rotate(0.8deg); background:#27272a; opacity:0.25; }
+    .empire-card {
+      position:relative; border-radius:18px; background:#161a1f;
+      border:1px solid rgba(255,255,255,0.08); overflow:hidden;
+      transition:opacity 0.16s ease, transform 0.16s ease;
+    }
+    .empire-accent-bar { height:2px; width:100%; }
+    .empire-card-body  { display:grid; grid-template-columns:1fr 1fr; min-height:480px; }
+    .empire-left {
+      padding:40px; display:flex; flex-direction:column; gap:24px;
+      border-right:1px solid rgba(255,255,255,0.05);
+    }
+    .empire-tier-row   { display:flex; align-items:center; gap:10px; }
+    .empire-tier-dot   { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .empire-tier-label { font-family:'IBM Plex Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:0.2em; color:rgba(255,255,255,0.25); }
+    .empire-icon       { color:inherit; }
+    .empire-icon svg   { display:block; }
+    .empire-tool-name {
+      font-family:'Barlow Condensed',sans-serif; font-style:italic;
+      font-size:52px; font-weight:900; text-transform:uppercase; letter-spacing:-0.01em; line-height:1;
+    }
+    .empire-tool-subtitle {
+      font-family:'Barlow Condensed',sans-serif; font-size:20px; font-weight:600;
+      text-transform:uppercase; letter-spacing:0.05em; color:rgba(255,255,255,0.45);
+    }
+    .empire-tool-desc { font-size:14px; color:rgba(255,255,255,0.4); line-height:1.65; font-weight:300; }
+    .empire-stats {
+      display:flex; border:1px solid rgba(255,255,255,0.06); border-radius:12px; overflow:hidden;
+    }
+    .empire-stat {
+      flex:1; padding:14px 16px;
+      border-right:1px solid rgba(255,255,255,0.06);
+    }
+    .empire-stat:last-child { border-right:none; }
+    .empire-stat.highlight  { background:rgba(255,255,255,0.03); }
+    .empire-stat-label { font-family:'IBM Plex Mono',monospace; font-size:7px; text-transform:uppercase; letter-spacing:0.2em; color:rgba(255,255,255,0.22); margin-bottom:6px; }
+    .empire-stat-value { font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; color:rgba(255,255,255,0.65); }
+    .empire-stat.highlight .empire-stat-value { /* color set inline */ }
+    .empire-badges { display:flex; flex-wrap:wrap; gap:8px; margin-top:auto; padding-top:8px; }
+    .empire-badge {
+      padding:4px 10px; font-family:'IBM Plex Mono',monospace; font-size:8px;
+      text-transform:uppercase; letter-spacing:0.12em; border-radius:3px; border:1px solid;
+    }
+    .empire-right { padding:32px; background:rgba(0,0,0,0.12); display:flex; flex-direction:column; }
+
+    /* Dashboard sub-components */
+    .dash-label { font-family:'IBM Plex Mono',monospace; font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:0.2em; margin-bottom:16px; }
+    .dash-block { background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.05); border-radius:12px; padding:20px; }
+    .dash-block-label { font-family:'IBM Plex Mono',monospace; font-size:8px; text-transform:uppercase; color:rgba(255,255,255,0.3); margin-bottom:8px; }
+    .dash-num { font-family:'Barlow Condensed',sans-serif; font-size:40px; font-weight:900; color:rgba(255,255,255,0.3); line-height:1; }
+    .dash-btn {
+      width:100%; padding:12px; margin-top:16px;
+      border-radius:8px; font-family:'IBM Plex Mono',monospace; font-size:9px;
+      text-transform:uppercase; letter-spacing:0.15em; cursor:pointer;
+      border:1px solid; transition:opacity 0.15s;
+    }
+    .dash-btn:hover { opacity:0.7; }
+    .bar-chart { flex:1; display:flex; align-items:flex-end; gap:3px; padding:0 2px; min-height:100px; }
+    .bar { flex:1; border-radius:3px 3px 0 0; min-height:4px; }
+    .dash-mini-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:16px; }
+    .dash-mini-cell { background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:10px; }
+    .dash-mini-label { font-family:'IBM Plex Mono',monospace; font-size:7px; text-transform:uppercase; color:rgba(255,255,255,0.3); margin-bottom:4px; }
+    .dash-mini-val   { font-family:'Barlow Condensed',sans-serif; font-size:18px; font-weight:700; color:white; }
+    .donut-wrap { display:flex; align-items:center; justify-content:center; padding:16px 0; }
+    .bid-list   { display:flex; flex-direction:column; gap:8px; margin-top:16px; }
+    .bid-row    { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); }
+    .bid-id     { font-family:'IBM Plex Mono',monospace; font-size:8px; color:rgba(255,255,255,0.4); }
+    .bid-val    { font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:600; color:rgba(255,255,255,0.35); }
+    .trend-line { flex:1; min-height:100px; position:relative; }
+    .dash-kpis  { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:16px; }
+    .dash-kpi   { background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:10px; text-align:center; }
+    .dash-kpi-lbl { font-family:'IBM Plex Mono',monospace; font-size:6px; text-transform:uppercase; color:rgba(255,255,255,0.3); margin-bottom:4px; }
+    .dash-kpi-val { font-family:'Barlow Condensed',sans-serif; font-size:16px; font-weight:700; }
+
+    /* ── APP WINDOW CHROME (dashboard recreations) ── */
+    .app-win { border-radius:10px; overflow:hidden; height:100%; display:flex; flex-direction:column; border:1px solid rgba(255,255,255,0.08); }
+    .app-win-bar { display:flex; align-items:center; gap:5px; padding:8px 12px; flex-shrink:0; }
+    .app-win-bar.light { background:#f0f0f0; border-bottom:1px solid #ddd; }
+    .app-win-bar.dark  { background:#1a2535; border-bottom:1px solid #2a3548; }
+    .app-dot { width:8px; height:8px; border-radius:50%; }
+    .app-title { font-family:'IBM Plex Mono',monospace; font-size:8px; margin-left:6px; }
+    .app-title.light { color:#aaa; }
+    .app-title.dark  { color:#4a6080; }
+    .app-win-body { flex:1; overflow:hidden; }
+    .app-win-body.light { background:#f5f7fa; }
+    .app-win-body.dark  { background:#0f1923; }
+
+    /* ── OPERATORS SECTION ── */
+    .operators { padding:96px 0; background:white; border-top:1px solid var(--zinc-200); }
+    .op-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:28px; margin-top:64px; }
+    .op-card { border-radius:20px; overflow:hidden; border:1px solid var(--zinc-200); }
+    .op-photo { position:relative; height:260px; overflow:hidden; }
+    .op-photo img { width:100%; height:100%; object-fit:cover; transition:transform 1s; }
+    .op-card:hover .op-photo img { transform:scale(1.05); }
+    .op-photo-overlay { position:absolute; inset:0; background:linear-gradient(to top,rgba(0,0,0,0.72) 0%,transparent 55%); }
+    .op-photo-info { position:absolute; bottom:16px; left:16px; }
+    .op-tag { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:4px; border:1px solid; margin-bottom:8px; }
+    .op-tag-dot { width:5px; height:5px; border-radius:50%; }
+    .op-tag span { font-family:'IBM Plex Mono',monospace; font-size:7px; text-transform:uppercase; letter-spacing:0.1em; }
+    .op-name { font-family:'Barlow Condensed',sans-serif; font-size:22px; font-weight:800; color:white; font-style:italic; line-height:1; }
+    .op-co   { font-size:12px; color:rgba(255,255,255,0.55); margin-top:2px; }
+    .op-body { padding:24px; background:white; }
+    .op-quote { font-size:14px; color:var(--zinc-600); line-height:1.65; font-style:italic; margin-bottom:20px; }
+    .op-stats { display:flex; justify-content:space-between; padding-top:16px; border-top:1px solid var(--zinc-100); }
+    .op-stat-num   { font-family:'Barlow Condensed',sans-serif; font-size:24px; font-weight:800; line-height:1; }
+    .op-stat-label { font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--zinc-400); text-transform:uppercase; margin-top:3px; }
+
+    @media (max-width:1024px) { .op-grid { grid-template-columns:1fr; } }
+
+    /* Empire CTA */
+    .empire-cta-btn {
+      padding:20px 48px; background:var(--zinc-900); color:white; border:none; cursor:pointer;
+      font-family:'Barlow Condensed',sans-serif; font-size:16px; font-weight:900;
+      font-style:italic; text-transform:uppercase; letter-spacing:0.1em;
+      transition:background 0.18s;
+    }
+    .empire-cta-btn:hover { background:var(--orange); }
+
+    /* ── FAQ ── */
+    .faq { padding:96px 0; background:white; }
+    .faq-grid { display:grid; grid-template-columns:1fr 1fr; gap:64px; align-items:center; }
+    .faq-img-wrap { position:relative; }
+    .faq-glow { position:absolute; inset:-16px; background:rgba(255,107,0,0.2); border-radius:40px; filter:blur(32px); pointer-events:none; }
+    .faq-img-frame { position:relative; border-radius:24px; overflow:hidden; border:8px solid black; box-shadow:0 32px 64px rgba(0,0,0,0.2); }
+    .faq-img-frame img { width:100%; aspect-ratio:4/5; object-fit:cover; display:block; transition:transform 1s; }
+    .faq-img-wrap:hover img { transform:scale(1.05); }
+    .faq-overlay { position:absolute; bottom:0; left:0; right:0; padding:32px; background:linear-gradient(to top,black,transparent); }
+    .faq-overlay-tag   { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--green); text-transform:uppercase; letter-spacing:0.15em; margin-bottom:8px; }
+    .faq-overlay-title { color:white; font-family:'Barlow Condensed',sans-serif; font-size:22px; font-weight:800; font-style:italic; text-transform:uppercase; letter-spacing:-0.01em; }
+    .faq-header { display:flex; align-items:center; gap:12px; color:var(--orange); margin-bottom:32px; }
+    .faq-header span { font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.3em; }
+    .faq-items  { display:flex; flex-direction:column; gap:24px; }
+    .faq-item   { border-bottom:1px solid rgba(0,0,0,0.05); padding-bottom:24px; }
+    .faq-q      { font-family:'Barlow Condensed',sans-serif; font-size:20px; font-weight:800; text-transform:uppercase; font-style:italic; letter-spacing:-0.01em; margin-bottom:8px; }
+    .faq-a      { font-size:14px; color:var(--zinc-600); font-weight:400; line-height:1.6; }
+
+    /* ── FOOTER ── */
+    .footer { background:white; border-top:1px solid var(--zinc-200); padding:80px 0 40px; }
+    .footer-cta {
+      border-radius:24px; border:1px solid var(--zinc-200);
+      background:linear-gradient(135deg,rgba(255,107,0,0.05),transparent,rgba(0,200,83,0.05));
+      padding:64px 48px; text-align:center; margin-bottom:80px; position:relative; overflow:hidden;
+    }
+    .cta-h2 {
+      font-family:'Barlow Condensed',sans-serif;
+      font-size:clamp(32px,4vw,56px); font-weight:900; font-style:italic;
+      letter-spacing:-0.02em; text-transform:uppercase; color:var(--zinc-900); margin-bottom:24px;
+    }
+    .cta-h2 span { color:var(--orange); }
+    .cta-p     { font-size:18px; color:var(--zinc-600); font-weight:300; line-height:1.6; max-width:640px; margin:0 auto 40px; }
+    .cta-btns  { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; }
+    .footer-grid { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:48px; margin-bottom:64px; padding-bottom:64px; border-bottom:1px solid var(--zinc-100); }
+    .footer-brand { display:flex; align-items:center; gap:8px; margin-bottom:24px; }
+    .footer-brand-name { font-family:'Barlow Condensed',sans-serif; font-size:22px; font-weight:800; letter-spacing:-0.01em; text-transform:uppercase; font-style:italic; }
+    .footer-desc { font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--zinc-500); max-width:280px; line-height:1.6; }
+    .footer-col-title { font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.2em; margin-bottom:24px; }
+    .footer-links { list-style:none; display:flex; flex-direction:column; gap:16px; }
+    .footer-links li { font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--zinc-500); text-transform:uppercase; cursor:pointer; transition:color 0.15s; }
+    .footer-links li:hover { color:var(--zinc-900); }
+    .footer-bottom  { display:flex; align-items:center; justify-content:space-between; }
+    .footer-copy    { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--zinc-400); text-transform:uppercase; letter-spacing:0.15em; }
+    .footer-right   { display:flex; align-items:center; gap:24px; }
+    .net-status     { display:flex; align-items:center; gap:8px; font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--green); text-transform:uppercase; }
+    .net-dot        { width:6px; height:6px; border-radius:50%; background:var(--green); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width:1024px) {
+      .hero-inner          { grid-template-columns:1fr; padding-top:100px; }
+      .tier-grid           { grid-template-columns:repeat(2,1fr); }
+      .faq-grid            { grid-template-columns:1fr; }
+      .footer-grid         { grid-template-columns:1fr 1fr; }
+      .nav-links, .nav-stats { display:none; }
+      .empire-card-body    { grid-template-columns:1fr; }
+      .empire-left         { border-right:none; border-bottom:1px solid rgba(255,255,255,0.05); }
+    }
+    @media (max-width:640px) {
+      .tier-grid   { grid-template-columns:1fr; }
+      .footer-grid { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════ NAVBAR ══════════════════════ -->
+<nav>
+  <div class="nav-inner">
+    <div style="display:flex;align-items:center;gap:32px">
+      <a href="#" class="nav-logo">
+        <div class="logo-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        R3UP
+      </a>
+      <div class="nav-links">
+        <button class="nav-link active">Home</button>
+        <button class="nav-link">Solutions</button>
+        <button class="nav-link">Blog</button>
+        <button class="nav-link">Contact</button>
+        <div class="nav-cmd">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          CMD: /EXECUTE_MATCH
+        </div>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="nav-stats">
+        <div>
+          <div class="nav-stat-label">Global_Yield</div>
+          <div class="nav-stat-value" style="color:var(--green)">+24.8%</div>
+        </div>
+        <div>
+          <div class="nav-stat-label">Liquidity</div>
+          <div class="nav-stat-value">$42.8M</div>
+        </div>
+      </div>
+      <button class="btn-auth">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Authenticate
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════════════ HERO ══════════════════════ -->
+<section class="hero terminal-grid">
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+    <div>
+      <div class="hero-badge">
+        <div class="dot pulse-anim"></div>
+        System_Status: Execution_Layer_Active
+      </div>
+      <h1 class="hero-h1">Maximize <br><span>Returns.</span></h1>
+      <p class="hero-p">
+        Every day your devices sit on a shelf, they lose <strong>0.5% value.</strong>
+        Our AI hunts for buyers in 30+ countries to capture the <em>Brazil Gap.</em>
+      </p>
+      <div class="hero-btns">
+        <button class="btn-primary">Upload Manifest</button>
+        <button class="btn-secondary">Live_Yield.exe</button>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="hero-glow"></div>
+      <div class="hero-terminal">
+        <div class="globe-canvas">
+          <div class="globe-coord">
+            <div>LAT: 25.7617° N</div>
+            <div>LNG: 80.1918° W</div>
+            <div class="status">STATUS: SYNCING...</div>
+          </div>
+          <div class="globe-sphere">
+            <div class="globe-lines"></div>
+            <div class="globe-ping" style="top:35%;left:25%"></div>
+            <div class="globe-ping" style="top:55%;left:65%;animation-delay:0.8s"></div>
+            <div class="globe-ping" style="top:28%;left:58%;animation-delay:1.4s"></div>
+            <div class="globe-ping" style="top:70%;left:40%;animation-delay:0.3s"></div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-widget float">
+        <div class="widget-tag">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Smart-Match™ Found
+        </div>
+        <div class="widget-title">iPhone 15 Pro (500u)</div>
+        <div class="widget-sub">Miami → Dubai Hub</div>
+        <div class="widget-delta">+$14,200 Δ</div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-ribbon">
+    <div class="ribbon-inner">
+      <span class="ribbon-item">iPhone 15 Pro: <span class="ribbon-price">$845</span> <span class="ribbon-profit">(+$85 Profit)</span></span>
+      <span class="ribbon-item">S24 Ultra: <span class="ribbon-price">$910</span> <span class="ribbon-profit">(+$110 Profit)</span></span>
+      <span class="ribbon-item">MacBook M3: <span class="ribbon-price">$1,450</span> <span class="ribbon-profit">(+$215 Profit)</span></span>
+      <span class="ribbon-item">iPad Pro: <span class="ribbon-price">$750</span> <span class="ribbon-profit">(+$95 Profit)</span></span>
+      <span class="ribbon-item">iPhone 15 Pro: <span class="ribbon-price">$845</span> <span class="ribbon-profit">(+$85 Profit)</span></span>
+      <span class="ribbon-item">S24 Ultra: <span class="ribbon-price">$910</span> <span class="ribbon-profit">(+$110 Profit)</span></span>
+      <span class="ribbon-item">MacBook M3: <span class="ribbon-price">$1,450</span> <span class="ribbon-profit">(+$215 Profit)</span></span>
+      <span class="ribbon-item">iPad Pro: <span class="ribbon-price">$750</span> <span class="ribbon-profit">(+$95 Profit)</span></span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════ ECOSYSTEM ══════════════════════ -->
+<section class="ecosystem terminal-grid">
+  <div class="container">
+    <div class="section-center">
+      <div class="section-badge">The Infrastructure</div>
+      <h2 class="section-h2">The <span>Network</span> Architecture.</h2>
+      <p class="section-p">From trade-in widgets to enterprise-grade execution, R3UP's multi-tier ecosystem ensures your inventory is always moving at peak efficiency.</p>
+    </div>
+    <div class="tier-grid">
+      <div class="tier-card" style="background:rgba(0,200,83,0.05);border-color:rgba(0,200,83,0.2)">
+        <div class="tier-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>
+        <div class="tier-label" style="color:var(--green)">Tier 0</div>
+        <div class="tier-name">Trade-In Widgets</div>
+        <div class="tier-desc">Buyback sites and retail intake widgets for seamless device ingestion.</div>
+      </div>
+      <div class="tier-card" style="background:rgba(255,107,0,0.05);border-color:rgba(255,107,0,0.2)">
+        <div class="tier-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+        <div class="tier-label" style="color:var(--orange)">Tier 1</div>
+        <div class="tier-name">Liquidity Layer</div>
+        <div class="tier-desc">Automated arbitrage matching with instant execution capabilities.</div>
+      </div>
+      <div class="tier-card" style="background:rgba(68,136,255,0.05);border-color:rgba(68,136,255,0.2)">
+        <div class="tier-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+        <div class="tier-label" style="color:var(--blue)">Tier 2</div>
+        <div class="tier-name">Logistics Hub</div>
+        <div class="tier-desc">End-to-end global shipping and grading verification network.</div>
+      </div>
+      <div class="tier-card" style="background:var(--zinc-100);border-color:var(--zinc-200)">
+        <div class="tier-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--zinc-900)" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg></div>
+        <div class="tier-label" style="color:var(--zinc-900)">Tier 3</div>
+        <div class="tier-name">Enterprise</div>
+        <div class="tier-desc">Full-stack asset management for global corporations and OEMs.</div>
+      </div>
+    </div>
+    <div class="data-strip">
+      <div class="data-strip-glow"></div>
+      <div class="data-strip-inner">
+        <div class="strip-left">
+          <div class="avatars">
+            <div class="avatar"><img src="https://picsum.photos/seed/user1/100/100" alt="node" /></div>
+            <div class="avatar"><img src="https://picsum.photos/seed/user2/100/100" alt="node" /></div>
+            <div class="avatar"><img src="https://picsum.photos/seed/user3/100/100" alt="node" /></div>
+            <div class="avatar"><img src="https://picsum.photos/seed/user4/100/100" alt="node" /></div>
+          </div>
+          <div class="strip-text">
+            <div class="title">Active Widgets: 4,281</div>
+            <div class="sub">Real-time intake active across 12 regions</div>
+          </div>
+        </div>
+        <div class="strip-stats">
+          <div><div class="strip-stat-num">1.2s</div><div class="strip-stat-label">Avg. Match Latency</div></div>
+          <div><div class="strip-stat-num green">$14.2M</div><div class="strip-stat-label">Daily Liquidity</div></div>
+          <div><div class="strip-stat-num orange">99.9%</div><div class="strip-stat-label">Execution Uptime</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════ OPERATORS IN THE FIELD ══════════════════════ -->
+<section class="operators">
+  <div class="container">
+    <div class="section-center" style="margin-bottom:0">
+      <div class="section-badge">/Real_Operators</div>
+      <h2 class="section-h2">Built for people who <span>move volume.</span></h2>
+      <p class="section-p">From solo retail shops to wholesale arbitrage desks — operators who run on R3UP share one thing: they never leave money on the table.</p>
+    </div>
+    <div class="op-grid">
+
+      <!-- Operator 1: Retail -->
+      <div class="op-card">
+        <div class="op-photo">
+          <img src="https://picsum.photos/seed/phonestore-counter-r3up/600/400" alt="Carlos M. — RetailPro Miami" referrerpolicy="no-referrer" />
+          <div class="op-photo-overlay"></div>
+          <div class="op-photo-info">
+            <div class="op-tag" style="background:rgba(0,200,83,0.12);border-color:rgba(0,200,83,0.35)">
+              <div class="op-tag-dot" style="background:var(--green)"></div>
+              <span style="color:var(--green)">Tier 0 Operator</span>
+            </div>
+            <div class="op-name">Carlos M.</div>
+            <div class="op-co">RetailPro // Miami</div>
+          </div>
+        </div>
+        <div class="op-body">
+          <p class="op-quote">"Before R3UP, I was leaving $50 on every trade-in. Now I check Smart Match and lock my margin before the customer even sits down."</p>
+          <div class="op-stats">
+            <div>
+              <div class="op-stat-num" style="color:var(--green)">840</div>
+              <div class="op-stat-label">Devices / Month</div>
+            </div>
+            <div>
+              <div class="op-stat-num" style="color:var(--orange)">+$41K</div>
+              <div class="op-stat-label">Extra Margin / Mo</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Operator 2: Wholesale / Tender -->
+      <div class="op-card">
+        <div class="op-photo">
+          <img src="https://picsum.photos/seed/logistics-inspector-hub/600/400" alt="Rakan A. — BulkTech Dubai" referrerpolicy="no-referrer" />
+          <div class="op-photo-overlay"></div>
+          <div class="op-photo-info">
+            <div class="op-tag" style="background:rgba(68,136,255,0.12);border-color:rgba(68,136,255,0.35)">
+              <div class="op-tag-dot" style="background:var(--blue)"></div>
+              <span style="color:var(--blue)">Tier 2 Operator</span>
+            </div>
+            <div class="op-name">Rakan A.</div>
+            <div class="op-co">BulkTech // Dubai</div>
+          </div>
+        </div>
+        <div class="op-body">
+          <p class="op-quote">"We cleared a $240K pallet in 6 hours. No calls, no brokers — just post, collect bids, close. The Tender module is a weapon."</p>
+          <div class="op-stats">
+            <div>
+              <div class="op-stat-num" style="color:var(--green)">$2.1M</div>
+              <div class="op-stat-label">Volume / Quarter</div>
+            </div>
+            <div>
+              <div class="op-stat-num" style="color:var(--orange)">6h</div>
+              <div class="op-stat-label">Avg. Clearance</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Operator 3: Analytics trader -->
+      <div class="op-card">
+        <div class="op-photo">
+          <img src="https://picsum.photos/seed/trading-desk-monitors/600/400" alt="Pilar V. — AssetLynx London" referrerpolicy="no-referrer" />
+          <div class="op-photo-overlay"></div>
+          <div class="op-photo-info">
+            <div class="op-tag" style="background:rgba(255,107,0,0.12);border-color:rgba(255,107,0,0.35)">
+              <div class="op-tag-dot" style="background:var(--orange)"></div>
+              <span style="color:var(--orange)">Tier 1 Operator</span>
+            </div>
+            <div class="op-name">Pilar V.</div>
+            <div class="op-co">AssetLynx // London</div>
+          </div>
+        </div>
+        <div class="op-body">
+          <p class="op-quote">"Analytics caught a Brazil Gap spike two days before everyone else. I moved 300 units at peak. R3UP is the edge — full stop."</p>
+          <div class="op-stats">
+            <div>
+              <div class="op-stat-num" style="color:var(--green)">15.8%</div>
+              <div class="op-stat-label">Avg Return</div>
+            </div>
+            <div>
+              <div class="op-stat-num" style="color:var(--orange)">2 days</div>
+              <div class="op-stat-label">Signal Lead Time</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════ EMPIRE TOOLSET SLIDER ══════════════════════ -->
+<section class="tool-section">
+  <div class="container">
+    <div class="tool-header">
+      <div class="tool-badge">/System_Intelligence</div>
+      <h2 class="tool-h2">The <span>Empire</span><br>Toolset.</h2>
+      <p class="tool-sub">SYSTEM_VERSION_2026 // READY_FOR_DEPLOYMENT</p>
+    </div>
+    <!-- Tab bar -->
+    <div class="empire-tab-wrap">
+      <div class="empire-tab-bar" id="empire-tab-bar">
+        <button class="empire-tab active" data-tab="0">Smart Match</button>
+        <button class="empire-tab"        data-tab="1">Price Intel</button>
+        <button class="empire-tab"        data-tab="2">Tender</button>
+        <button class="empire-tab"        data-tab="3">Syndicate</button>
+        <button class="empire-tab"        data-tab="4">Analytics</button>
+      </div>
+    </div>
+    <!-- Card stack -->
+    <div class="empire-stack">
+      <div class="empire-card-bg empire-card-bg-2"></div>
+      <div class="empire-card-bg empire-card-bg-1"></div>
+      <div class="empire-card" id="empire-card">
+        <div class="empire-accent-bar" id="empire-accent-bar"></div>
+        <div class="empire-card-body">
+          <div class="empire-left">
+            <div class="empire-tier-row">
+              <div class="empire-tier-dot" id="empire-dot"></div>
+              <span class="empire-tier-label" id="empire-tier"></span>
+            </div>
+            <div class="empire-icon" id="empire-icon"></div>
+            <div>
+              <div class="empire-tool-name" id="empire-name"></div>
+              <div class="empire-tool-subtitle" id="empire-subtitle"></div>
+            </div>
+            <p class="empire-tool-desc" id="empire-desc"></p>
+            <div class="empire-stats" id="empire-stats"></div>
+            <div class="empire-badges" id="empire-badges"></div>
+          </div>
+          <div class="empire-right" id="empire-dashboard"></div>
+        </div>
+      </div>
+    </div>
+    <!-- CTA -->
+    <div style="margin-top:80px;text-align:center">
+      <p class="mono" style="font-size:10px;color:var(--zinc-400);text-transform:uppercase;letter-spacing:0.3em;margin-bottom:24px">Select_Tier_To_Command</p>
+      <button class="empire-cta-btn">Enter the R3UP Empire →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════ FAQ ══════════════════════ -->
+<section class="faq">
+  <div class="container">
+    <div class="faq-grid">
+      <div class="faq-img-wrap">
+        <div class="faq-glow"></div>
+        <div class="faq-img-frame">
+          <img src="https://picsum.photos/seed/warehouse-ops-r3up/800/1000" alt="R3UP Warehouse Operations" referrerpolicy="no-referrer" />
+          <div class="faq-overlay">
+            <div class="faq-overlay-tag">/Physical_Verification_Active</div>
+            <div class="faq-overlay-title">Miami Hub // Bay 04</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="faq-header">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>Common_Inquiries</span>
+        </div>
+        <div class="faq-items">
+          <div class="faq-item">
+            <div class="faq-q">Is the capital in Group Buys insured?</div>
+            <div class="faq-a">Yes. Every Tier 2 Syndicate buy is backed by a physical escrow and 100% insurance on the inventory from origin to hub.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">Who handles the actual grading?</div>
+            <div class="faq-a">Our trained warehouse agents use R3UP's proprietary diagnostic tools to verify every single unit. No ghost-grading.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">How fast is the payout?</div>
+            <div class="faq-a">Once the Digital WorkForce verifies the lot at the hub, payout is triggered via smart-contract within 4 hours.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">I'm a one-man shop — is this too big for me?</div>
+            <div class="faq-a">R3UP was built to make small shops act like global corporations. Whether you're buying 5 units or 5,000, our Digital Workforce handles the logistics and matching.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════ FOOTER ══════════════════════ -->
+<footer class="footer terminal-grid">
+  <div class="container">
+    <div class="footer-cta">
+      <h2 class="cta-h2">Stop Waiting. <br>Start <span>Matching.</span></h2>
+      <p class="cta-p">Every day your inventory sits on a shelf, it loses 0.5% value. Upload your manifest now and let our AI hunt for your global buyer.</p>
+      <div class="cta-btns">
+        <button class="btn-primary">Upload My List</button>
+        <button class="btn-secondary">Request Strategy Call.sh</button>
+      </div>
+    </div>
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">
+          <div class="logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+          <span class="footer-brand-name">R3UP Nation</span>
+        </div>
+        <p class="footer-desc">The AI-driven brokerage for sustainable IT asset management. Maximizing recovery value through global intelligence.</p>
+      </div>
+      <div>
+        <div class="footer-col-title" style="color:var(--orange)">Ecosystem</div>
+        <ul class="footer-links">
+          <li>The AI Brokerage</li>
+          <li>Smart-Match™</li>
+          <li>Tier 0 Sensors</li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title" style="color:var(--zinc-400)">Company</div>
+        <ul class="footer-links"><li>About Us</li><li>Pricing</li><li>Security</li></ul>
+      </div>
+      <div>
+        <div class="footer-col-title" style="color:var(--zinc-400)">Legal</div>
+        <ul class="footer-links"><li>Privacy.pdf</li><li>Terms.exe</li></ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2026 R3UP_NATION // SYSTEM_Sovereignty_Active</div>
+      <div class="footer-right">
+        <div class="net-status"><div class="net-dot pulse-anim"></div> NETWORK_STATUS: OPTIMAL</div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ── Empire Toolset Slider ──────────────────────────────────────────────
+const ICON = {
+  trending: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
+  chart:    `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
+  gavel:    `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m14 13-8.5 8.5a2.12 2.12 0 0 1-3-3L11 10"/><path d="m16 16 6-6"/><path d="m8 8 6-6"/><path d="m9 7 8 8"/><path d="m21 11-8-8"/></svg>`,
+  users:    `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  activity: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+};
+
+function barChart(bars, accent) {
+  return bars.map((h, i) => {
+    const isLast = i === bars.length - 1;
+    const bg = isLast ? accent : `${accent}22`;
+    return `<div class="bar" style="height:${h}%;background:${bg}"></div>`;
+  }).join('');
+}
+
+function trendPath(pts, accent) {
+  const w = 190, h = 90;
+  const path = pts.map((y, i) => `${i===0?'M':'L'} ${(i/(pts.length-1))*w+5},${y}`).join(' ');
+  const area  = `${path} L ${w+5},${h+5} L 5,${h+5} Z`;
+  const gId   = 'tg' + accent.replace('#','');
+  return `<svg style="width:100%;height:100%" viewBox="0 0 200 100" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="${gId}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${accent}" stop-opacity="0.25"/>
+        <stop offset="100%" stop-color="${accent}" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="${area}" fill="url(#${gId})"/>
+    <path d="${path}" fill="none" stroke="${accent}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+function donut(pct, accent) {
+  const r = 36, circ = 2*Math.PI*r, filled = circ * (pct/100);
+  return `<svg viewBox="0 0 100 100" style="width:112px;height:112px;transform:rotate(-90deg)">
+    <circle cx="50" cy="50" r="${r}" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="10"/>
+    <circle cx="50" cy="50" r="${r}" fill="none" stroke="${accent}" stroke-width="10"
+      stroke-dasharray="${filled} ${circ-filled}" stroke-linecap="round"/>
+  </svg>`;
+}
+
+const TOOLS = [
+  {
+    tier: 'TIER 0', tierCode: 'TERMINAL_OUTPUT_T0',
+    name: 'Smart Match', subtitle: 'Win Every Walk-In',
+    desc: 'AI matches your walk-in offer against 30+ global markets in real-time. Lock your margin before the customer leaves the counter.',
+    accent: '#00C853',
+    icon: ICON.trending,
+    stats: [
+      { label: 'Local Price', value: '$650' },
+      { label: 'R3UP Global', value: '$890' },
+      { label: 'Signal', value: '+$240 PROFIT', hi: true },
+    ],
+    badges: ['IMEI CLEAR', 'UNLOCKED', 'A+ GRADE'],
+    dashboard() {
+      const c = this.accent;
+      return `<div class="app-win" style="height:100%">
+        <div class="app-win-bar dark">
+          <div class="app-dot" style="background:#ff5f57"></div>
+          <div class="app-dot" style="background:#febc2e"></div>
+          <div class="app-dot" style="background:#28c840"></div>
+          <span class="app-title dark">Smart Match — Global Heat Map</span>
+        </div>
+        <div class="app-win-body dark" style="padding:12px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <div style="flex:1;background:#112;border:1px solid #1a3a1a;border-radius:6px;padding:8px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:7px;color:#4a8a5a;text-transform:uppercase;margin-bottom:4px">Audit Manifest</div>
+              <div style="border:1px dashed #1e4a2a;border-radius:4px;padding:6px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:7px;color:#2a5a3a">Drop CSV or enter devices</div>
+              <div style="display:flex;gap:4px;margin-top:6px">
+                <input style="flex:1;background:#0a1a0a;border:1px solid #1a3a1a;border-radius:3px;padding:4px 6px;font-size:7px;color:#4a8a5a;font-family:'IBM Plex Mono',monospace" placeholder="iPhone 15 Pro Max 256GB" readonly />
+              </div>
+              <div style="margin-top:6px;background:${c};border-radius:3px;padding:5px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:7px;font-weight:600;color:#000;cursor:pointer">▶ Run Intelligence Match</div>
+            </div>
+          </div>
+          <div style="flex:1;background:#0a1015;border:1px solid #1a2535;border-radius:6px;padding:8px;position:relative;min-height:100px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:6px;color:#2a4a3a;text-transform:uppercase;margin-bottom:6px">Global Arbitrage Map</div>
+            <svg viewBox="0 0 200 100" style="width:100%;opacity:0.7">
+              <path d="M 20,40 Q 40,30 60,35 Q 80,25 100,30 Q 120,20 140,28 Q 160,22 180,30" fill="none" stroke="#1a3a2a" stroke-width="0.5"/>
+              <ellipse cx="55" cy="45" rx="22" ry="14" fill="none" stroke="#1a2a1a" stroke-width="0.5"/>
+              <ellipse cx="115" cy="38" rx="30" ry="16" fill="none" stroke="#1a2a1a" stroke-width="0.5"/>
+              <ellipse cx="160" cy="42" rx="18" ry="12" fill="none" stroke="#1a2a1a" stroke-width="0.5"/>
+              <circle cx="55" cy="45" r="3" fill="${c}" opacity="0.9"/>
+              <circle cx="55" cy="45" r="6" fill="${c}" opacity="0.15"/>
+              <text x="58" y="44" font-size="4" fill="${c}" font-family="monospace">Chicago</text>
+              <circle cx="42" cy="52" r="2.5" fill="${c}" opacity="0.7"/>
+              <text x="45" y="51" font-size="4" fill="${c}80" font-family="monospace">Houston</text>
+              <circle cx="152" cy="38" r="3.5" fill="#FF6B00" opacity="0.9"/>
+              <circle cx="152" cy="38" r="7" fill="#FF6B00" opacity="0.12"/>
+              <text x="155" y="37" font-size="4" fill="#FF6B00" font-family="monospace">Dubai</text>
+              <circle cx="175" cy="30" r="3" fill="#4488FF" opacity="0.8"/>
+              <text x="155" y="28" font-size="4" fill="#4488FF80" font-family="monospace">Shenzhen</text>
+            </svg>
+          </div>
+          <div style="background:#0a120a;border:1px solid ${c}30;border-radius:6px;padding:8px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:7px;color:${c}80;margin-bottom:4px">● BENCHMARK ASSET — 98.4% CONFIDENCE</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:${c}">iPhone 15 Pro Max 256GB</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:7px;color:#2a5a3a;margin-top:2px">Low Volatility · A+ Grade · IMEI Clear</div>
+            <div style="display:flex;gap:6px;margin-top:6px">
+              <div style="flex:1;background:#0f1f0f;border:1px solid #1a3a1a;border-radius:4px;padding:4px;text-align:center">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:6px;color:#2a5a3a">#1 DUBAI UAE</div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;color:#FF6B00">$1225</div>
+              </div>
+              <div style="flex:1;background:#0f1f0f;border:1px solid #1a3a1a;border-radius:4px;padding:4px;text-align:center">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:6px;color:#2a5a3a">#2 SHENZHEN</div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;color:${c}">$1210</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }
+  },
+  {
+    tier: 'TIER 1', tierCode: 'TERMINAL_OUTPUT_T1',
+    name: 'Price Intel', subtitle: 'See the Gap. Strike.',
+    desc: 'Real-time price feeds across 30+ markets. Spot arbitrage windows before they close and move inventory at peak yield.',
+    accent: '#FF6B00',
+    icon: ICON.chart,
+    stats: [
+      { label: 'Avg iPhone 14 Pro', value: '$847' },
+      { label: '30d Change', value: '-5.3%' },
+      { label: 'Signal', value: 'PRICE ALERT', hi: true },
+    ],
+    badges: ['READ-ONLY', '30+ MARKETS', 'REAL-TIME'],
+    dashboard() {
+      const c = this.accent;
+      return `<div class="app-win" style="height:100%">
+        <div class="app-win-bar light">
+          <div class="app-dot" style="background:#ff5f57"></div>
+          <div class="app-dot" style="background:#febc2e"></div>
+          <div class="app-dot" style="background:#28c840"></div>
+          <span class="app-title light">Market Analysis — Price Intelligence</span>
+        </div>
+        <div class="app-win-body light" style="padding:10px;display:flex;flex-direction:column;gap:8px;overflow:hidden">
+          <div style="display:flex;gap:4px">
+            <div style="padding:4px 8px;background:#1a1a1a;color:white;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:7px;font-weight:600">iPhone 13</div>
+            <div style="padding:4px 8px;background:#f0f0f0;color:#666;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:7px">S22</div>
+            <div style="padding:4px 8px;background:#f0f0f0;color:#666;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:7px">Pixel 6</div>
+            <div style="padding:4px 8px;background:#f0f0f0;color:#666;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:7px">iPhone 12</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <div style="flex:1;background:white;border:1px solid #e8e8e8;border-radius:6px;padding:8px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:6px;color:#999;text-transform:uppercase">Avg Price</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:#111">$450</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:7px;color:#e44">▼ -5.3%</div>
+            </div>
+            <div style="flex:1;background:white;border:1px solid #e8e8e8;border-radius:6px;padding:8px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:6px;color:#999;text-transform:uppercase">Demand</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:#00C853">HIGH</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:7px;color:#00C853">▲ +12%</div>
+            </div>
+            <div style="flex:1;background:white;border:1px solid #e8e8e8;border-radius:6px;padding:8px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:6px;color:#999;text-transform:uppercase">Volume</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:#111">1,234</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:7px;color:#00C853">▲ +8.7%</div>
+            </div>
+          </div>
+          <div style="flex:1;background:white;border:1px solid #e8e8e8;border-radius:6px;padding:10px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:7px;color:#999;margin-bottom:6px">Price History — 6 Months</div>
+            <svg viewBox="0 0 180 70" style="width:100%;height:70px">
+              <defs><linearGradient id="priceGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${c}" stop-opacity="0.2"/><stop offset="100%" stop-color="${c}" stop-opacity="0"/></linearGradient></defs>
+              <path d="M 5,15 L 35,22 L 65,28 L 95,32 L 125,38 L 155,45 L 175,50 L 175,70 L 5,70 Z" fill="url(#priceGrad)"/>
+              <path d="M 5,15 L 35,22 L 65,28 L 95,32 L 125,38 L 155,45 L 175,50" fill="none" stroke="${c}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <text x="5"   y="68" font-size="5" fill="#ccc" font-family="monospace">Jan</text>
+              <text x="60"  y="68" font-size="5" fill="#ccc" font-family="monospace">Mar</text>
+              <text x="120" y="68" font-size="5" fill="#ccc" font-family="monospace">May</text>
+              <text x="160" y="68" font-size="5" fill="#ccc" font-family="monospace">Jul</text>
+              <text x="3"   y="14" font-size="5" fill="${c}" font-family="monospace">$550</text>
+              <text x="158" y="49" font-size="5" fill="${c}" font-family="monospace">$450</text>
+            </svg>
+          </div>
+          <div style="display:flex;justify-content:space-between;background:white;border:1px solid #e8e8e8;border-radius:6px;padding:8px">
+            <div style="text-align:center">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:6px;color:#999">6M Change</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:#e44">-18.2%</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:6px;color:#999">Peak</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:#111">$550</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:6px;color:#999">Floor</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:#111">$440</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }
+  },
+  {
+    tier: 'TIER 2', tierCode: 'TERMINAL_OUTPUT_T2',
+    name: 'Tender', subtitle: 'Scalability Without Headcount.',
+    desc: 'Automated tender engine. Post your pallet, let the global network bid competitively. Close at peak price every time.',
+    accent: '#4488FF',
+    icon: ICON.gavel,
+    stats: [
+      { label: 'Current Bid', value: '$48,250' },
+      { label: 'Reserve', value: '$55,000' },
+      { label: 'Signal', value: '8 BIDDERS', hi: true },
+    ],
+    badges: ['GRADED', 'ERASED', 'TESTED'],
+    dashboard() {
+      const c = this.accent;
+      return `<div class="app-win" style="height:100%">
+        <div class="app-win-bar light">
+          <div class="app-dot" style="background:#ff5f57"></div>
+          <div class="app-dot" style="background:#febc2e"></div>
+          <div class="app-dot" style="background:#28c840"></div>
+          <span class="app-title light">Marketplace — Tender Engine</span>
+        </div>
+        <div class="app-win-body light" style="padding:10px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:6px">
+            <div style="flex:1;background:white;border:1px solid #e8e8e8;border-radius:6px;padding:8px;text-align:center">
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:#111">1,245</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:6px;color:#999;text-transform:uppercase">Total Listings</div>
+            </div>
+            <div style="flex:1;background:white;border:1px solid #e8e8e8;border-radius:6px;padding:8px;text-align:center">
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:#00C853">87</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:6px;color:#999;text-transform:uppercase">New Today</div>
+            </div>
+            <div style="flex:1;background:white;border:1px solid #e8e8e8;border-radius:6px;padding:8px;text-align:center">
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:${c}">18.2%</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:6px;color:#999;text-transform:uppercase">Avg Discount</div>
+            </div>
+          </div>
+          <div style="background:white;border:1px solid #e8e8e8;border-radius:8px;padding:10px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+              <div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:600;color:#111">iPhone 13 Pro Max — 128GB</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:6px;color:#999;margin-top:2px">Condition: Grade A · Unlocked</div>
+              </div>
+              <div style="background:#e8f5e9;color:#00C853;border-radius:4px;padding:3px 7px;font-family:'IBM Plex Mono',monospace;font-size:7px;font-weight:600">-22% OFF</div>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center;margin-bottom:8px">
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:#111">$389</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:7px;color:#bbb;text-decoration:line-through">$499</div>
+            </div>
+            <div style="display:flex;gap:4px;margin-bottom:8px">
+              <div style="padding:3px 6px;background:#f0f0f0;border-radius:3px;font-family:'IBM Plex Mono',monospace;font-size:6px;color:#666">eBay</div>
+              <div style="padding:3px 6px;background:#f0f0f0;border-radius:3px;font-family:'IBM Plex Mono',monospace;font-size:6px;color:#666">Swappa</div>
+            </div>
+            <div style="background:${c};border-radius:4px;padding:5px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:7px;font-weight:600;color:white">View Details →</div>
+          </div>
+          <div style="background:white;border:1px solid #e8e8e8;border-radius:8px;padding:10px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+              <div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:600;color:#111">Samsung Galaxy S22 Ultra</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:6px;color:#999;margin-top:2px">Condition: Grade B+ · Factory Reset</div>
+              </div>
+              <div style="background:#fff3e0;color:#FF6B00;border-radius:4px;padding:3px 7px;font-family:'IBM Plex Mono',monospace;font-size:7px;font-weight:600">-15% OFF</div>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center;margin-bottom:8px">
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:#111">$612</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:7px;color:#bbb;text-decoration:line-through">$720</div>
+            </div>
+            <div style="display:flex;gap:4px;margin-bottom:8px">
+              <div style="padding:3px 6px;background:#f0f0f0;border-radius:3px;font-family:'IBM Plex Mono',monospace;font-size:6px;color:#666">Swappa</div>
+            </div>
+            <div style="background:#1a1a1a;border-radius:4px;padding:5px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:7px;font-weight:600;color:white">View Details →</div>
+          </div>
+        </div>
+      </div>`;
+    }
+  },
+  {
+    tier: 'TIER 2', tierCode: 'TERMINAL_OUTPUT_T2B',
+    name: 'Syndicate', subtitle: 'Pool Capital. Scale Returns.',
+    desc: 'Co-invest in wholesale pallets with vetted operators. Escrow-backed, fully insured, with transparent waterfall distribution.',
+    accent: '#00C853',
+    icon: ICON.users,
+    stats: [
+      { label: 'Active Syndicates', value: '8' },
+      { label: 'Avg Return', value: '15.8%' },
+      { label: 'Signal', value: '$342K POOLED', hi: true },
+    ],
+    badges: ['ESCROW BACKED', '45 MEMBERS', 'INSURED'],
+    dashboard() {
+      const c = this.accent;
+      return `<div class="app-win" style="height:100%">
+        <div class="app-win-bar light">
+          <div class="app-dot" style="background:#ff5f57"></div>
+          <div class="app-dot" style="background:#febc2e"></div>
+          <div class="app-dot" style="background:#28c840"></div>
+          <span class="app-title light">Dashboard — Portfolio Overview</span>
+        </div>
+        <div class="app-win-body light" style="padding:10px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <div style="background:white;border:1px solid #e8e8e8;border-radius:6px;padding:8px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:6px;color:#999;text-transform:uppercase">Market Value</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:#111">$45,231</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:7px;color:${c}">▲ +20.1%</div>
+            </div>
+            <div style="background:white;border:1px solid #e8e8e8;border-radius:6px;padding:8px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:6px;color:#999;text-transform:uppercase">Revenue</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:#111">$12,234</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:7px;color:${c}">▲ +12.4%</div>
+            </div>
+            <div style="background:white;border:1px solid #e8e8e8;border-radius:6px;padding:8px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:6px;color:#999;text-transform:uppercase">Inventory</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:#111">123</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:7px;color:#e44">▼ -2.3%</div>
+            </div>
+            <div style="background:white;border:1px solid #e8e8e8;border-radius:6px;padding:8px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:6px;color:#999;text-transform:uppercase">Active Traders</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:#111">1,234</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:7px;color:${c}">▲ +4.3%</div>
+            </div>
+          </div>
+          <div style="flex:1;background:white;border:1px solid #e8e8e8;border-radius:6px;padding:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:7px;color:#999">Revenue Trends</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;color:${c}">YTD $112,000</div>
+            </div>
+            <svg viewBox="0 0 180 65" style="width:100%;height:65px">
+              <defs><linearGradient id="synGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${c}" stop-opacity="0.25"/><stop offset="100%" stop-color="${c}" stop-opacity="0"/></linearGradient></defs>
+              <path d="M 5,55 L 35,48 L 65,40 L 95,30 L 125,20 L 155,12 L 175,8 L 175,65 L 5,65 Z" fill="url(#synGrad)"/>
+              <path d="M 5,55 L 35,48 L 65,40 L 95,30 L 125,20 L 155,12 L 175,8" fill="none" stroke="${c}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="175" cy="8" r="3" fill="${c}"/>
+              <text x="5"   y="63" font-size="5" fill="#ccc" font-family="monospace">Jan</text>
+              <text x="60"  y="63" font-size="5" fill="#ccc" font-family="monospace">Mar</text>
+              <text x="120" y="63" font-size="5" fill="#ccc" font-family="monospace">May</text>
+              <text x="160" y="63" font-size="5" fill="#ccc" font-family="monospace">Jul</text>
+              <text x="155" y="7"  font-size="5" fill="${c}" font-family="monospace">$22K</text>
+            </svg>
+          </div>
+        </div>
+      </div>`;
+    }
+  },
+  {
+    tier: 'TIER 1', tierCode: 'TERMINAL_OUTPUT_T1B',
+    name: 'Analytics', subtitle: 'Total Visibility.',
+    desc: '6-month trend lines, AI-driven demand signals, and cross-platform price history converge in one institutional terminal.',
+    accent: '#FF6B00',
+    icon: ICON.activity,
+    stats: [
+      { label: 'Trade Volume', value: '1,234' },
+      { label: 'Market Demand', value: 'HIGH' },
+      { label: 'Signal', value: 'AI INSIGHTS', hi: true },
+    ],
+    badges: ['6-MONTH TREND', 'AI INSIGHTS', 'MULTI-PLATFORM'],
+    dashboard() {
+      const c = this.accent;
+      return `<div class="app-win" style="height:100%">
+        <div class="app-win-bar light">
+          <div class="app-dot" style="background:#ff5f57"></div>
+          <div class="app-dot" style="background:#febc2e"></div>
+          <div class="app-dot" style="background:#28c840"></div>
+          <span class="app-title light">Regional Price Map — United States</span>
+        </div>
+        <div class="app-win-body light" style="padding:10px;display:flex;flex-direction:column;gap:8px">
+          <div style="flex:1;background:white;border:1px solid #e8e8e8;border-radius:6px;padding:8px;position:relative">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:6px;color:#999;margin-bottom:4px">iPhone 13 — Avg Resale Price by Region</div>
+            <svg viewBox="0 0 200 100" style="width:100%;height:90px">
+              <path d="M 20,25 Q 40,20 60,22 Q 80,18 100,20 Q 120,15 140,22 Q 160,18 175,25 Q 180,30 178,45 Q 175,55 165,60 Q 155,65 140,62 Q 120,60 100,62 Q 80,60 60,58 Q 40,56 25,52 Q 18,45 18,38 Z" fill="#e8edf5" stroke="#c0c8d8" stroke-width="0.5"/>
+              <path d="M 20,38 Q 25,35 35,36 Q 38,40 36,44 Q 30,46 24,44 Z" fill="#d0d8e8" stroke="#b0b8c8" stroke-width="0.3"/>
+              <circle cx="115" cy="28" r="8" fill="#4488FF" opacity="0.85"/>
+              <text x="115" cy="28" text-anchor="middle" dominant-baseline="middle" y="28" font-size="4.5" fill="white" font-weight="bold" font-family="monospace">$490</text>
+              <text x="115" y="38" text-anchor="middle" font-size="3.5" fill="#4488FF" font-family="monospace">NYC</text>
+              <circle cx="55" cy="38" r="7" fill="#4488FF" opacity="0.8"/>
+              <text x="55" y="38" text-anchor="middle" dominant-baseline="middle" font-size="4.5" fill="white" font-weight="bold" font-family="monospace">$480</text>
+              <text x="55" y="47" text-anchor="middle" font-size="3.5" fill="#4488FF" font-family="monospace">LA</text>
+              <circle cx="88" cy="33" r="6.5" fill="#4488FF" opacity="0.75"/>
+              <text x="88" y="33" text-anchor="middle" dominant-baseline="middle" font-size="4" fill="white" font-weight="bold" font-family="monospace">$450</text>
+              <text x="88" y="41" text-anchor="middle" font-size="3.5" fill="#4488FF" font-family="monospace">CHI</text>
+              <circle cx="78" cy="47" r="6" fill="#4488FF" opacity="0.7"/>
+              <text x="78" y="47" text-anchor="middle" dominant-baseline="middle" font-size="4" fill="white" font-weight="bold" font-family="monospace">$430</text>
+              <text x="78" y="55" text-anchor="middle" font-size="3.5" fill="#4488FF" font-family="monospace">HOU</text>
+              <circle cx="105" cy="52" r="6" fill="#4488FF" opacity="0.72"/>
+              <text x="105" y="52" text-anchor="middle" dominant-baseline="middle" font-size="4" fill="white" font-weight="bold" font-family="monospace">$470</text>
+              <text x="105" y="60" text-anchor="middle" font-size="3.5" fill="#4488FF" font-family="monospace">MIA</text>
+              <circle cx="36" cy="27" r="5.5" fill="#4488FF" opacity="0.7"/>
+              <text x="36" y="27" text-anchor="middle" dominant-baseline="middle" font-size="4" fill="white" font-weight="bold" font-family="monospace">$460</text>
+              <text x="36" y="34" text-anchor="middle" font-size="3.5" fill="#4488FF" font-family="monospace">SEA</text>
+            </svg>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px">
+            <div style="background:white;border:1px solid #e8e8e8;border-radius:4px;padding:5px;text-align:center">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:5px;color:#999">Boston</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;color:#4488FF">$485</div>
+            </div>
+            <div style="background:white;border:1px solid #e8e8e8;border-radius:4px;padding:5px;text-align:center">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:5px;color:#999">Denver</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;color:#4488FF">$440</div>
+            </div>
+            <div style="background:white;border:1px solid #e8e8e8;border-radius:4px;padding:5px;text-align:center">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:5px;color:#999">Atlanta</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;color:#4488FF">$445</div>
+            </div>
+            <div style="background:#fff8f0;border:1px solid ${c}40;border-radius:4px;padding:5px;text-align:center">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:5px;color:${c}">Peak City</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;color:${c}">NYC</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }
+  },
+];
+
+let activeIndex = 0;
+
+function renderCard() {
+  const t = TOOLS[activeIndex];
+  const c = t.accent;
+
+  document.getElementById('empire-accent-bar').style.background = `linear-gradient(90deg, ${c} 0%, transparent 55%)`;
+
+  const dot = document.getElementById('empire-dot');
+  dot.style.backgroundColor = c;
+  dot.style.boxShadow = `0 0 6px ${c}`;
+
+  document.getElementById('empire-tier').textContent = `${t.tier} // ${t.tierCode}`;
+
+  const iconEl = document.getElementById('empire-icon');
+  iconEl.innerHTML = t.icon;
+  iconEl.style.color = c;
+
+  const nameEl = document.getElementById('empire-name');
+  nameEl.textContent = t.name;
+  nameEl.style.color = c;
+
+  document.getElementById('empire-subtitle').textContent = t.subtitle;
+  document.getElementById('empire-desc').textContent = t.desc;
+
+  document.getElementById('empire-stats').innerHTML = t.stats.map((s, i) => `
+    <div class="empire-stat${s.hi ? ' highlight' : ''}">
+      <div class="empire-stat-label">${s.label}</div>
+      <div class="empire-stat-value" style="${s.hi ? `color:${c}` : ''}">${s.value}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('empire-badges').innerHTML = t.badges.map(b => `
+    <span class="empire-badge" style="border-color:${c}25;color:${c}70;background:${c}06">${b}</span>
+  `).join('');
+
+  document.getElementById('empire-dashboard').innerHTML = t.dashboard();
+}
+
+function switchTab(index) {
+  if (index === activeIndex) return;
+  const card = document.getElementById('empire-card');
+  card.style.opacity = '0';
+  card.style.transform = 'translateY(10px)';
+  setTimeout(() => {
+    activeIndex = index;
+    renderCard();
+    card.style.opacity = '1';
+    card.style.transform = 'translateY(0)';
+    document.querySelectorAll('.empire-tab').forEach((tab, i) => {
+      tab.classList.toggle('active', i === index);
+    });
+  }, 160);
+}
+
+document.querySelectorAll('.empire-tab').forEach((tab, i) => {
+  tab.addEventListener('click', () => switchTab(i));
+});
+
+renderCard();
+</script>
+</body>
+</html>
